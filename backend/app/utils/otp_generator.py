@@ -1,11 +1,12 @@
-import hashlib
 import random
+import hashlib
 
+def generate_otp():
+    otp = str(random.randint(100000, 999999))
 
-def generate_otp(length: int = 6) -> tuple[str, str]:
-    otp_plain = ''.join(str(random.randint(0, 9)) for _ in range(length))
-    otp_hash = hashlib.sha256(otp_plain.encode()).hexdigest()
-    return otp_plain, otp_hash
+    otp_hash = hashlib.sha256(otp.encode()).hexdigest()
+
+    return otp, otp_hash
 
 
 def verify_otp(otp_input: str, otp_hash: str) -> bool:

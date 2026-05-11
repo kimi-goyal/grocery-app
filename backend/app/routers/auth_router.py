@@ -122,14 +122,11 @@ def resend_otp(
         raise
 
 
-@router.post("/verify-otp")
-def verify(
-    data: OTPVerifyRequest,
-    db: Session = Depends(get_db),
-):
-    verify_otp(db, data.email, data.otp)
-    return {"message": "Email verified successfully"}
+from app.services.auth_service import verify_otp_service
 
+@router.post("/verify-otp")
+def verify(data: OTPVerifyRequest, db: Session = Depends(get_db)):
+    return verify_otp_service(db, data.email, data.otp)
 
 @router.post("/login", response_model=TokenResponse)
 @limiter.limit("5/minute")

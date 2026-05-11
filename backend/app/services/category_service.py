@@ -5,8 +5,6 @@ from app.repositories.category_repository import *
 
 
 
-
-
 def create_category_service(db: Session, data):
     category = Category(**data.dict())
     return create_category(db, category)
