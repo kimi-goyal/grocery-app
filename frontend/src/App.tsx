@@ -1,9 +1,15 @@
-const App = () => {
-  return (
-   <h1 className="text-3xl font-bold text-red-500 underline">
-    Hello world!
-  </h1>
-  )
-}
 
-export default App
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import AppRoutes from './routes/AppRoutes';
+import AdminRoutes from './admin/routes/AdminRoutes';
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/management/*" element={<AdminRoutes />} />
+        <Route path="/*" element={<AppRoutes />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
