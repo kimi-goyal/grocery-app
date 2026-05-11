@@ -1,167 +1,35 @@
-# # Created by venv; see https://docs.python.org/3/library/venv.html
-# *
-# /backend/.venv/
-# /backend/.venv
-# backend/.venv/
-# .venv/
-# /.venv/
-
-# # Byte-compiled / optimized / DLL files
-# __pycache__/
-# *.py[cod]
-# *$py.class
-
-# # =========================
-# # Environment variables
-# # =========================
-# .env
-# .env.*
-# !.env.example
-
-# # =========================
-# # Python / Backend
-# # =========================
-# .venv/
-# venv/
-# ENV/
-# env/
-
-# __pycache__/
-# *.py[cod]
-# *.pyo
-# *.pyd
-# *.log
-
-# # Pytest / coverage
-# .pytest_cache/
-# .coverage
-# htmlcov/
-
-# # MyPy
-# .mypy_cache/
-
-# # Alembic
-# alembic/versions/*.pyc
-
-# # VS Code / IDEs
-# .vscode/
-# .idea/
-
-# # =========================
-# # Node / Frontend
-# # =========================
-# node_modules/
-# npm-debug.log*
-# yarn-debug.log*
-# yarn-error.log*
-# pnpm-debug.log*
-
-# # Build outputs
-# dist/
-# build/
-# .out/
-# .next/
-
-# # =========================
-# # OS
-# # =========================
-# .DS_Store
-# Thumbs.db
-
-# # =========================
-# # Misc
-# # =========================
-# *.sqlite3
-# *.db
-
-# # Python
-# __pycache__/
-# *.pyc
-# *.pyo
-# *.pyd
-
-# # Virtual environments
-# .venv/
-# venv/
-# env/
-
-# # OS
-# .DS_Store
-# Thumbs.db
-
-# # IDE
-# .vscode/
-# .idea/
-
-
-# =========================
+# =====================
 # Environment variables
-# =========================
+# =====================
 .env
 .env.*
-!.env.example
+backend/.env
+backend/.env.*
 
-# =========================
-# Python / Backend
-# =========================
+# =====================
+# Python virtual env
+# =====================
 .venv/
 venv/
 env/
-ENV/
+backend/.venv/
+backend/venv/
 
+# =====================
+# Python cache
+# =====================
 __pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.log
+*.pyc
 
-# Pytest / coverage
-.pytest_cache/
-.coverage
-htmlcov/
-
-# MyPy
-.mypy_cache/
-
-# Alembic (ignore cache only)
-alembic/versions/__pycache__/
-alembic/versions/*.pyc
-
-# =========================
-# Node / Frontend
-# =========================
+# =====================
+# Node
+# =====================
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
 
-# Build outputs
-dist/
-build/
-.out/
-.next/
-
-# =========================
-# IDEs
-# =========================
+# =====================
+# IDE / OS
+# =====================
 .vscode/
 .idea/
-
-# =========================
-# OS
-# =========================
 .DS_Store
 Thumbs.db
-
-# =========================
-# Local DBs
-# =========================
-*.sqlite3
-*.db
-/backend/.venv/
-/backend/.venv
-backend/.venv/
-/backend/.venv/
-/backend/.env
-backend/.env/
