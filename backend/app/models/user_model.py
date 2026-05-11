@@ -45,3 +45,5 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(nullable=False)
     role: Mapped[str] = mapped_column(default="user")
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    phone: Mapped[str] = mapped_column(String, nullable=True)
+    avatar: Mapped[str] = mapped_column(String, nullable=True)

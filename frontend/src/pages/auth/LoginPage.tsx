@@ -26,7 +26,7 @@ export default function LoginForm({ onSwitch }: { onSwitch: () => void }) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    login({ email });
+    login({ username: email, password });
     navigate('/home');
   };
 

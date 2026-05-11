@@ -22,13 +22,13 @@ export default function RegisterForm({ onSwitch }: { onSwitch: () => void }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const { login } = useAuthStore();
+  const { register } = useAuthStore();
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    login({ name, email });
-    navigate('/home');
+    register({ name, email, username: email, password });
+    navigate('/auth');
   };
 
   return (

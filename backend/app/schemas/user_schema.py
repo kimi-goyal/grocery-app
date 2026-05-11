@@ -12,8 +12,11 @@ class UserResponse(BaseModel):
     id: int
     name: str
     email: EmailStr
+    username: str
     role: str
     is_verified: bool
+    phone: str | None = None
+    avatar: str | None = None
     created_at: datetime
 
     class Config:

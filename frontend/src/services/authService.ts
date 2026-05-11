@@ -27,6 +27,8 @@ export interface MeResponse {
   username: string;
   role: string;
   is_verified: boolean;
+  phone?: string;
+  avatar?: string;
 }
 
 export const authService = {

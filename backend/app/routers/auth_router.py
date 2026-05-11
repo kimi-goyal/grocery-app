@@ -65,6 +65,7 @@ import logging
 from pydantic import BaseModel
 
 from app.dependencies.auth_dependencies import get_db, get_current_user
+from app.repositories.user_repository import get_user_by_id
 from app.services.auth_service import register_user, login_user, verify_otp, resend_otp_service
 from app.schemas.auth_schema import (
     UserRegister,
@@ -154,12 +155,23 @@ def refresh(data: RefreshRequest):
 
 
 @router.get("/me")
-def get_current_user_info(current_user: dict = Depends(get_current_user)):
+def get_current_user_info(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """Protected endpoint that requires a valid access token"""
+    user = get_user_by_id(db, current_user["user_id"])
+    if not user:
+        from fastapi import HTTPException, status
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
     return {
-        "user_id": current_user["user_id"],
-        "role": current_user["role"],
-        "message": "Access token is valid"
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "username": user.username,
+        "role": user.role,
+        "is_verified": user.is_verified,
     }
 
 
