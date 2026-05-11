@@ -159,3 +159,9 @@ Thumbs.db
 # =========================
 *.sqlite3
 *.db
+/backend/.venv/
+/backend/.venv
+backend/.venv/
+/backend/.venv/
+/backend/.env
+backend/.env/
