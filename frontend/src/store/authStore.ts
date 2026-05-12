@@ -1,11 +1,14 @@
+import { create } from "zustand";
+import { persist, subscribeWithSelector } from "zustand/middleware";
+import { authService } from "../services/authService";
+import { tokenManager } from "../lib/tokenManager";
+import type {
+  RegisterPayload,
+  LoginPayload,
+  MeResponse,
+} from "../services/authService";
 
-import { create } from 'zustand';
-import { persist, subscribeWithSelector } from 'zustand/middleware';
-import { authService } from '../services/authService';
-import { tokenManager } from '../lib/tokenManager';
-import type { RegisterPayload, LoginPayload, MeResponse } from '../services/authService';
-
-export type AuthStep = 'idle' | 'pending_otp';
+export type AuthStep = "idle" | "pending_otp";
 
 interface AuthState {
   user: MeResponse | null;
@@ -26,6 +29,7 @@ interface AuthState {
   logout: () => void;
   skipAsGuest: () => void;
   initAuth: () => Promise<void>;
+  googleLogin: (idToken: string) => Promise<void>;
 
   // Error helpers
   clearError: () => void;
@@ -44,7 +48,7 @@ export const useAuthStore = create<AuthState>()(
         error: null,
         fieldErrors: {},
         pendingEmail: null,
-        authStep: 'idle',
+        authStep: "idle",
         otpSuccess: false,
 
         // ─── Register ────────────────────────────────────────────────────────
@@ -56,18 +60,20 @@ export const useAuthStore = create<AuthState>()(
             set({
               loading: false,
               pendingEmail: data.email.toLowerCase().trim(),
-              authStep: 'pending_otp',
+              authStep: "pending_otp",
             });
           } catch (err: any) {
             const status = err?.response?.status;
             const detail = err?.response?.data?.detail;
-            let errorMsg = 'Registration failed. Please try again.';
+            let errorMsg = "Registration failed. Please try again.";
             const fieldErrs: Record<string, string> = {};
 
             if (status === 400) {
-              if (typeof detail === 'string') {
-                if (detail.toLowerCase().includes('email')) fieldErrs.email = detail;
-                else if (detail.toLowerCase().includes('username')) fieldErrs.username = detail;
+              if (typeof detail === "string") {
+                if (detail.toLowerCase().includes("email"))
+                  fieldErrs.email = detail;
+                else if (detail.toLowerCase().includes("username"))
+                  fieldErrs.username = detail;
                 else errorMsg = detail;
               } else if (Array.isArray(detail)) {
                 // FastAPI validation error array
@@ -75,21 +81,26 @@ export const useAuthStore = create<AuthState>()(
                   const field = d.loc?.[d.loc.length - 1];
                   if (field) fieldErrs[field] = d.msg;
                 });
-                errorMsg = '';
+                errorMsg = "";
               }
             } else if (status === 422) {
               if (Array.isArray(detail)) {
                 detail.forEach((d: any) => {
                   const field = d.loc?.[d.loc.length - 1];
-                  if (field) fieldErrs[field] = d.msg.replace('Value error, ', '');
+                  if (field)
+                    fieldErrs[field] = d.msg.replace("Value error, ", "");
                 });
-                errorMsg = '';
+                errorMsg = "";
               }
             } else if (status === 0 || !err?.response) {
-              errorMsg = 'Cannot reach server. Check your connection.';
+              errorMsg = "Cannot reach server. Check your connection.";
             }
 
-            set({ loading: false, error: errorMsg || null, fieldErrors: fieldErrs });
+            set({
+              loading: false,
+              error: errorMsg || null,
+              fieldErrors: fieldErrs,
+            });
             throw err;
           }
         },
@@ -105,35 +116,35 @@ export const useAuthStore = create<AuthState>()(
               isAuthenticated: true,
               isGuest: false,
               user: me,
-              authStep: 'idle',
+              authStep: "idle",
               pendingEmail: null,
               error: null,
             });
           } catch (err: any) {
             const status = err?.response?.status;
             const detail = err?.response?.data?.detail;
-            let errorMsg = 'Login failed. Please try again.';
+            let errorMsg = "Login failed. Please try again.";
 
             if (status === 401) {
-              errorMsg = 'Incorrect email/username or password.';
+              errorMsg = "Incorrect email/username or password.";
             } else if (status === 403) {
               // Unverified email — route to OTP
               const identifier = data.username;
-              const emailGuess = identifier.includes('@') ? identifier : null;
+              const emailGuess = identifier.includes("@") ? identifier : null;
               set({
                 loading: false,
                 error: null,
                 pendingEmail: emailGuess,
-                authStep: 'pending_otp',
+                authStep: "pending_otp",
               });
               return;
             } else if (status === 404) {
-              errorMsg = 'Account not found. Please sign up.';
+              errorMsg = "Account not found. Please sign up.";
             } else if (status === 429) {
-              errorMsg = 'Too many attempts. Please wait and try again.';
+              errorMsg = "Too many attempts. Please wait and try again.";
             } else if (!err?.response) {
-              errorMsg = 'Cannot reach server. Check your connection.';
-            } else if (typeof detail === 'string') {
+              errorMsg = "Cannot reach server. Check your connection.";
+            } else if (typeof detail === "string") {
               errorMsg = detail;
             }
 
@@ -150,7 +161,7 @@ export const useAuthStore = create<AuthState>()(
             set({
               loading: false,
               otpSuccess: true,
-              authStep: 'idle',
+              authStep: "idle",
               pendingEmail: null,
             });
             // Reset success flag after 2s
@@ -158,11 +169,12 @@ export const useAuthStore = create<AuthState>()(
           } catch (err: any) {
             const status = err?.response?.status;
             const detail = err?.response?.data?.detail;
-            let msg = 'Invalid or expired OTP. Please try again.';
+            let msg = "Invalid or expired OTP. Please try again.";
 
-            if (status === 400) msg = typeof detail === 'string' ? detail : msg;
-            else if (status === 404) msg = 'User not found.';
-            else if (!err?.response) msg = 'Network error. Check your connection.';
+            if (status === 400) msg = typeof detail === "string" ? detail : msg;
+            else if (status === 404) msg = "User not found.";
+            else if (!err?.response)
+              msg = "Network error. Check your connection.";
 
             set({ loading: false, error: msg });
             throw err;
@@ -178,11 +190,11 @@ export const useAuthStore = create<AuthState>()(
           } catch (err: any) {
             const status = err?.response?.status;
             const detail = err?.response?.data?.detail;
-            let msg = 'Failed to resend OTP.';
+            let msg = "Failed to resend OTP.";
 
-            if (status === 400) msg = typeof detail === 'string' ? detail : msg;
-            else if (status === 404) msg = 'Email not found.';
-            else if (!err?.response) msg = 'Network error.';
+            if (status === 400) msg = typeof detail === "string" ? detail : msg;
+            else if (status === 404) msg = "Email not found.";
+            else if (!err?.response) msg = "Network error.";
 
             set({ loading: false, error: msg });
             throw err;
@@ -210,7 +222,7 @@ export const useAuthStore = create<AuthState>()(
             user: null,
             isAuthenticated: false,
             isGuest: false,
-            authStep: 'idle',
+            authStep: "idle",
             pendingEmail: null,
             error: null,
             fieldErrors: {},
@@ -219,13 +231,33 @@ export const useAuthStore = create<AuthState>()(
 
         skipAsGuest: () => set({ isGuest: true, isAuthenticated: false }),
 
+        // ─── Google Login ───────────────────────────────────────────────────
+        googleLogin: async (idToken: string) => {
+          set({ loading: true, error: null });
+
+          try {
+            await authService.googleLogin(idToken);
+            const me = await authService.getMe();
+
+            set({
+              user: me,
+              isAuthenticated: true,
+              isGuest: false,
+              loading: false,
+            });
+          } catch (err) {
+            set({ loading: false, error: "Google login/signup failed" });
+          }
+        },
+
         // ─── Error helpers ───────────────────────────────────────────────────
         clearError: () => set({ error: null }),
-        setFieldError: (field, msg) => set(s => ({ fieldErrors: { ...s.fieldErrors, [field]: msg } })),
+        setFieldError: (field, msg) =>
+          set((s) => ({ fieldErrors: { ...s.fieldErrors, [field]: msg } })),
         clearFieldErrors: () => set({ fieldErrors: {} }),
       }),
       {
-        name: 'freshcart-auth',
+        name: "freshcart-auth",
         partialize: (s) => ({
           user: s.user,
           isAuthenticated: s.isAuthenticated,
@@ -233,13 +265,12 @@ export const useAuthStore = create<AuthState>()(
           pendingEmail: s.pendingEmail,
           authStep: s.authStep,
         }),
-      }
-    )
-  )
+      },
+    ),
+  ),
 );
 
 // Listen for forced logout event emitted by axios response interceptor
-window.addEventListener('auth:logout', () => {
+window.addEventListener("auth:logout", () => {
   useAuthStore.getState().logout();
 });
-

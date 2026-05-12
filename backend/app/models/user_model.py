@@ -47,3 +47,5 @@ class User(Base):
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     phone: Mapped[str] = mapped_column(String, nullable=True)
     avatar: Mapped[str] = mapped_column(String, nullable=True)
+
+    provider: Mapped[str] = mapped_column(default="email")

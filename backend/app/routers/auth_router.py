@@ -66,7 +66,7 @@ from pydantic import BaseModel
 
 from app.dependencies.auth_dependencies import get_db, get_current_user
 from app.repositories.user_repository import get_user_by_id
-from app.services.auth_service import register_user, login_user, verify_otp, resend_otp_service
+from app.services.auth_service import google_login_service, register_user, login_user, verify_otp, resend_otp_service
 from app.schemas.auth_schema import (
     UserRegister,
     UserLogin,
@@ -204,3 +204,6 @@ def logout(current_user: dict = Depends(get_current_user)):
         "message": "Logged out successfully. Please delete tokens on client side.",
         "user_id": current_user["user_id"],
     }
+@router.post("/google")
+def google_login(data: dict, db: Session = Depends(get_db)):
+    return google_login_service(db, data["id_token"])
