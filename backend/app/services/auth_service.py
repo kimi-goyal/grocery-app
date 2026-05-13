@@ -191,6 +191,10 @@ from app.schemas.auth_schema import UserLogin, UserRegister
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from firebase_admin import auth as firebase_auth
+from app.models.user_model import User
+from app.utils.jwt_handler import create_access_token, create_refresh_token
+
 from app.repositories.otp_repository import (
     create_otp,
     get_active_otp,
@@ -278,9 +282,41 @@ def verify_otp_service(db: Session, email: str, otp: str):
 
     return {"message": "Verified successfully"}
 
-# ✅ LOGIN USER
+# # ✅ LOGIN USER
+# def login_user(db: Session, data: UserLogin):
+#     user = get_user_by_identifier(db, data.username)
+
+#     if not user or not verify_password(data.password, user.password_hash):
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED,
+#             detail="Invalid credentials",
+#         )
+
+#     if not user.is_verified:
+#         raise HTTPException(
+#             status_code=status.HTTP_403_FORBIDDEN,
+#             detail="Email not verified",
+#         )
+
+#     payload = {
+#         "user_id": user.id,
+#         "role": user.role,
+#     }
+
+#     return {
+#         "access_token": create_access_token(payload),
+#         "refresh_token": create_refresh_token(payload),
+#         "token_type": "bearer",
+#     }
+
+#✅ LOGIN USER
 def login_user(db: Session, data: UserLogin):
     user = get_user_by_identifier(db, data.username)
+    if user.provider == "google":
+        raise HTTPException(
+            status_code=400,
+            detail="Use Google login for this account",
+        )
 
     if not user or not verify_password(data.password, user.password_hash):
         raise HTTPException(
@@ -336,3 +372,44 @@ def resend_otp_service(db: Session, email: str):
     )
 
     return {"message": "OTP resent successfully"}
+from firebase_admin import auth as firebase_auth
+
+def google_login_service(db: Session, id_token: str):
+    try:
+        decoded = firebase_auth.verify_id_token(id_token)
+    except Exception:
+        raise HTTPException(401, "Invalid Google token")
+
+    email = decoded.get("email")
+    name = decoded.get("name")
+    picture = decoded.get("picture")
+
+    if not email:
+        raise HTTPException(400, "Email not available")
+
+    user = get_user_by_email(db, email)
+
+    # ✅ SIGNUP (new user)
+    if not user:
+        user = User(
+            name=name or "Google User",
+            email=email,
+            username=email,
+            password_hash="google_auth",
+            is_verified=True,
+            provider="google",
+            avatar=picture,
+        )
+        create_user(db, user)
+
+    # ✅ LOGIN (existing user)
+    payload = {
+        "user_id": user.id,
+        "role": user.role,
+    }
+
+    return {
+        "access_token": create_access_token(payload),
+        "refresh_token": create_refresh_token(payload),
+        "token_type": "bearer",
+    }
