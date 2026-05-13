@@ -330,9 +330,10 @@
 import { useState, useCallback } from 'react';
 import Input from '../common/Input';
 import PasswordStrengthBar from './PasswordStrengthBar';
-import SocialButtons from './SocialButtons';
 import { useAuthStore } from '../../store/authStore';
- 
+
+
+
 import {
   validateName,
   validateEmail,
@@ -341,12 +342,15 @@ import {
   validateConfirmPassword,
   hasErrors,
 } from '../../utils/validators';
- 
+import { useNavigate } from 'react-router-dom';
+
+import GoogleButton from './GoogleButton';
+
 interface Props {
   onSwitch: () => void;
   onRegistered: () => void;
 }
- 
+
 export default function RegisterForm({ onSwitch, onRegistered }: Props) {
   const [fields, setFields] = useState({
     name: '',
@@ -355,7 +359,7 @@ export default function RegisterForm({ onSwitch, onRegistered }: Props) {
     password: '',
     confirm: '',
   });
- 
+
   const [touched, setTouched] = useState({
     name: false,
     email: false,
@@ -363,10 +367,10 @@ export default function RegisterForm({ onSwitch, onRegistered }: Props) {
     password: false,
     confirm: false,
   });
- 
+
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
- 
+
   const {
     register,
     loading,
@@ -375,9 +379,10 @@ export default function RegisterForm({ onSwitch, onRegistered }: Props) {
     clearError,
     clearFieldErrors,
   } = useAuthStore();
- 
+
+  const navigate = useNavigate();
   /* ---------------- Validation ---------------- */
- 
+
   const liveErrors = {
     name: validateName(fields.name),
     email: validateEmail(fields.email),
@@ -385,7 +390,7 @@ export default function RegisterForm({ onSwitch, onRegistered }: Props) {
     password: validatePassword(fields.password),
     confirm: validateConfirmPassword(fields.password, fields.confirm),
   };
- 
+
   // Server errors override client errors
   const resolvedErrors = {
     name: fieldErrors.name || liveErrors.name,
@@ -394,28 +399,28 @@ export default function RegisterForm({ onSwitch, onRegistered }: Props) {
     password: fieldErrors.password || liveErrors.password,
     confirm: liveErrors.confirm,
   };
- 
+
   /* ---------------- Helpers ---------------- */
- 
+
   const setField =
     (key: keyof typeof fields) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      clearError();
-      clearFieldErrors();
-      setFields(prev => ({
-        ...prev,
-        [key]: e.target.value,
-      }));
-    };
- 
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        clearError();
+        clearFieldErrors();
+        setFields(prev => ({
+          ...prev,
+          [key]: e.target.value,
+        }));
+      };
+
   const touch =
     (key: keyof typeof touched) =>
-    () =>
-      setTouched(prev => ({
-        ...prev,
-        [key]: true,
-      }));
- 
+      () =>
+        setTouched(prev => ({
+          ...prev,
+          [key]: true,
+        }));
+
   const touchAll = () =>
     setTouched({
       name: true,
@@ -424,15 +429,15 @@ export default function RegisterForm({ onSwitch, onRegistered }: Props) {
       password: true,
       confirm: true,
     });
- 
+
   /* ---------------- Submit ---------------- */
- 
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     touchAll();
- 
+
     if (hasErrors(liveErrors)) return;
- 
+
     try {
       await register({
         name: fields.name.trim(),
@@ -440,15 +445,15 @@ export default function RegisterForm({ onSwitch, onRegistered }: Props) {
         username: fields.username.trim(),
         password: fields.password,
       });
- 
+
       onRegistered();
     } catch {
       // handled inside auth store
     }
   };
- 
+
   /* ---------------- UI Helpers ---------------- */
- 
+
   const EyeButton = ({
     show,
     toggle,
@@ -491,9 +496,13 @@ export default function RegisterForm({ onSwitch, onRegistered }: Props) {
       )}
     </button>
   );
+
+
+
+
  
   /* ---------------- JSX ---------------- */
- 
+
   return (
     <div>
       <div className="mb-8">
@@ -502,11 +511,11 @@ export default function RegisterForm({ onSwitch, onRegistered }: Props) {
           Join us and order groceries faster than ever.
         </p>
       </div>
- 
+
       <form
         onSubmit={handleSubmit}
         noValidate
-        className="flex flex-col gap-3.5 space-y-5 animate-fadeIn"
+        className="flex flex-col gap-2 animate-fadeIn"
       >
         {/* Global API error */}
         {error && (
@@ -514,7 +523,7 @@ export default function RegisterForm({ onSwitch, onRegistered }: Props) {
             <p className="text-red-400 text-xs">{error}</p>
           </div>
         )}
- 
+
         <Input
           label="Full Name"
           type="text"
@@ -526,7 +535,7 @@ export default function RegisterForm({ onSwitch, onRegistered }: Props) {
           error={resolvedErrors.name}
           autoComplete="name"
         />
- 
+
         <Input
           label="Email Address"
           type="email"
@@ -538,7 +547,7 @@ export default function RegisterForm({ onSwitch, onRegistered }: Props) {
           error={resolvedErrors.email}
           autoComplete="email"
         />
- 
+
         <Input
           label="Username"
           type="text"
@@ -551,7 +560,7 @@ export default function RegisterForm({ onSwitch, onRegistered }: Props) {
           autoComplete="username"
           hint={!touched.username ? 'Letters, numbers, underscores only' : undefined}
         />
- 
+
         <div className="flex flex-col gap-1">
           <Input
             label="Password"
@@ -570,12 +579,12 @@ export default function RegisterForm({ onSwitch, onRegistered }: Props) {
               />
             }
           />
- 
+
           {fields.password && (
             <PasswordStrengthBar password={fields.password} />
           )}
         </div>
- 
+
         <Input
           label="Confirm Password"
           type={showConfirm ? 'text' : 'password'}
@@ -593,7 +602,7 @@ export default function RegisterForm({ onSwitch, onRegistered }: Props) {
             />
           }
         />
- 
+
         <button
           type="submit"
           disabled={loading}
@@ -605,9 +614,8 @@ export default function RegisterForm({ onSwitch, onRegistered }: Props) {
         >
           {loading ? 'Creating account...' : 'Create Account'}
         </button>
- 
-        <SocialButtons />
- 
+       <GoogleButton label="Sign up with Google" />
+
         <p className="text-center text-sm text-gray-500">
           Already have an account?{' '}
           <button

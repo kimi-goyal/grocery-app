@@ -252,7 +252,8 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Input from '../common/Input';
-import SocialButtons from './SocialButtons';
+import GoogleButton from "../../components/auth/GoogleButton";
+
 import { useAuthStore } from '../../store/authStore';
 import {
   validateIdentifier,
@@ -260,6 +261,7 @@ import {
   validateLoginForm,
   hasErrors,
 } from '../../utils/validators';
+
 
 interface Props {
   onSwitch: () => void;
@@ -304,6 +306,8 @@ export default function LoginForm({ onSwitch, onNeedsOtp }: Props) {
       if (status === 403 && onNeedsOtp) onNeedsOtp();
     }
   };
+
+
 
   const isFormClean = !hasErrors(validateLoginForm(fields.identifier, fields.password));
 
@@ -408,11 +412,11 @@ export default function LoginForm({ onSwitch, onNeedsOtp }: Props) {
           </span>
         )}
         {/* Hover shimmer */}
+        
         <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12 pointer-events-none" />
       </button>
-
-      <SocialButtons />
-
+    
+   <GoogleButton label="Login with Google" />
       <p className="text-center text-sm text-gray-500">
         Don't have an account?{' '}
         <button

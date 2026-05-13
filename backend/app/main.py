@@ -10,6 +10,8 @@ from app.routers.cart_router import router as cart_router
 from app.routers.order_router import router as order_router
 from app.routers.user_router import router as user_router
 
+import app.core.firebase_admin  # Initialize Firebase Admin SDK
+
 app = FastAPI(
     title="QuickBite Backend",
     lifespan=lifespan,
