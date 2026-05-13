@@ -27,14 +27,27 @@ export default function Navbar({ onCartOpen }: { onCartOpen: () => void }) {
         </div>
 
         {/* Deliver to */}
-        <button className="hidden md:flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors shrink-0">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff4d6d" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          <div className="text-left">
-            <div className="text-[10px] text-gray-500">Deliver to</div>
-            <div className="text-white font-medium text-xs flex items-center gap-1">Mumbai, Maharashtra <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg></div>
-          </div>
-        </button>
 
+        {isAuthenticated && (
+          <button className="hidden md:flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors shrink-0">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff4d6d" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <div className="text-left">
+              <div className="text-[10px] text-gray-500">Deliver to</div>
+              <div className="text-white font-medium text-xs flex items-center gap-1">Mumbai, Maharashtra <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+            </div>
+         
+        </button>
+        )}
+        
+        {!isAuthenticated && (
+          <button onClick={() => navigate('/auth')} className="hidden md:flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors shrink-0">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff4d6d" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <div className="text-left">
+              <div className="text-[10px] text-gray-500">Deliver to</div>
+              <div className="text-white font-medium text-xs flex items-center gap-1">Add Address Now <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+            </div>
+        </button>
+        )}
         {/* Search */}
         <div className="flex-1 relative max-w-xl">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
