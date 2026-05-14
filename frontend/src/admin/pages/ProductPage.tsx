@@ -6,28 +6,91 @@ import Modal from '../components/Modal';
 import AdminInput from '../components/AdminInput';
 import AdminSelect from '../components/AdminSelect';
 import { useCategoryStore } from '../store/categoryStore';
-import type { Category, Subcategory } from '../store/categoryStore';
+import type { Category, Product, Subcategory } from '../store/categoryStore';
+import { useEffect } from "react";
+import StatusBadge from "../components/StatusBadge";
+function ProductForm({
+  categoryId,
+  subcategoryId,
+  onClose,
+  initialData,
+  isEdit
+}: {
+  categoryId: string;
+  subcategoryId: string;
+  onClose: () => void;
+  initialData?: Product;
+  isEdit?: boolean;
+}) {
+  const { addProduct, updateProduct } = useCategoryStore();
 
-function ProductForm({ categoryId, subcategoryId, onClose }: { categoryId: string; subcategoryId: string; onClose: () => void }) {
-  const { addProduct, categories } = useCategoryStore();
-  const [form, setForm] = useState({ name: '', description: '', price: '', mrp: '', stock: '', unit: 'kg', sku: '', image: '', active: true });
+  // const [form, setForm] = useState({ name: '', description: '', price: '', mrp: '', stock: '', unit: 'kg', sku: '', image: '', active: true });
   const [preview, setPreview] = useState('');
+  const [form, setForm] = useState(
+    initialData || {
+      name: '',
+      description: '',
+      price: '',
+      mrp: '',
+      stock: '',
+      unit: 'kg',
+      sku: '',
+      image: '',
+      active: true
+    }
+  );
 
   const set = (k: string, v: string | boolean) => setForm(f => ({ ...f, [k]: v }));
 
-  const handleImageUrl = (url: string) => { set('image', url); setPreview(url); };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleUpload = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("http://localhost:8000/api/v1/admin/upload-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      set("image", data.url); // ✅ THIS goes to backend
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Future API consumption flow:
-    // 1. POST /api/admin/products with FormData (image upload)
-    // 2. Optimistically update categoryStore
-    // 3. Show success toast
-    addProduct({
-      name: form.name, description: form.description, price: Number(form.price),
-      mrp: Number(form.mrp), stock: Number(form.stock), unit: form.unit,
-      sku: form.sku, image: form.image, categoryId, subcategoryId, active: form.active,
-    });
+
+    if (isEdit && initialData) {
+      await updateProduct(initialData.id, {
+        name: form.name,
+        description: form.description,
+        price: Number(form.price),
+        mrp: Number(form.mrp),
+        stock: Number(form.stock),
+        unit: form.unit,
+        sku: form.sku,
+        image: form.image,
+        active: form.active,
+      });
+    } else {
+      await addProduct({
+        name: form.name,
+        description: form.description,
+        price: Number(form.price),
+        mrp: Number(form.mrp),
+        stock: Number(form.stock),
+        unit: form.unit,
+        sku: form.sku,
+        image: form.image,
+        categoryId,
+        subcategoryId,
+        active: form.active,
+      });
+    }
+
     onClose();
   };
 
@@ -37,19 +100,33 @@ function ProductForm({ categoryId, subcategoryId, onClose }: { categoryId: strin
     <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto scrollbar-hide pr-1">
       {/* Image upload */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium text-[#94A3B8]">Product Image</label>
+        <label className="text-xs font-medium text-[#94A3B8]">
+          Product Image
+        </label>
+
         <div className="flex gap-3 items-start">
+
+          {/* Preview */}
           <div className="w-24 h-24 rounded-xl border border-white/10 bg-white/3 flex items-center justify-center overflow-hidden shrink-0">
-            {preview ? <img src={preview} alt="" className="w-full h-full object-cover" onError={() => setPreview('')} /> : <ImagePlus size={24} className="text-gray-600" />}
+
+            <ImagePlus size={24} className="text-gray-600" />
+            {preview && <img src={preview} alt="Preview" className="w-full h-full object-cover" />}
           </div>
-          <div className="flex-1 space-y-2">
-            <input
-              type="text" placeholder="Paste image URL..."
-              onChange={e => handleImageUrl(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#FF4D8D]/50 transition-all"
-            />
-            <p className="text-[10px] text-[#94A3B8]">Paste a public image URL. File upload available after backend integration.</p>
-          </div>
+
+          {/* File input */}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              if (e.target.files?.[0]) {
+                const file = e.target.files[0];
+                handleUpload(file);
+                setPreview(URL.createObjectURL(file)); // ✅ preview
+              }
+            }}
+            className="text-sm text-white"
+          />
+
         </div>
       </div>
 
@@ -86,7 +163,7 @@ function ProductForm({ categoryId, subcategoryId, onClose }: { categoryId: strin
       <div className="flex gap-3 pt-2">
         <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-white/10 text-[#94A3B8] hover:text-white hover:bg-white/5 text-sm transition-all">Cancel</button>
         <button type="submit" className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all" style={{ background: 'linear-gradient(135deg,#FF4D8D,#e63c7a)', fontFamily: 'Sora,sans-serif' }}>
-          Add Product
+          {isEdit ? 'Update Product' : 'Add Product'}
         </button>
       </div>
     </form>
@@ -96,8 +173,9 @@ function ProductForm({ categoryId, subcategoryId, onClose }: { categoryId: strin
 function SubcategoryAccordion({ sub, category }: { sub: Subcategory; category: Category }) {
   const [open, setOpen] = useState(false);
   const [addProductOpen, setAddProductOpen] = useState(false);
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
   const { deleteProduct } = useCategoryStore();
-
+  const { deleteSubcategory, toggleSubcategory } = useCategoryStore();
   return (
     <div className="border border-white/8 rounded-xl overflow-hidden">
       <button
@@ -109,12 +187,45 @@ function SubcategoryAccordion({ sub, category }: { sub: Subcategory; category: C
           <span className="text-white text-sm font-medium" style={{ fontFamily: 'Sora,sans-serif' }}>{sub.name}</span>
           <span className="text-[10px] text-[#94A3B8] bg-white/5 px-2 py-0.5 rounded-full">{sub.products.length} products</span>
         </div>
-        <button
-          onClick={e => { e.stopPropagation(); setAddProductOpen(true); }}
-          className="flex items-center gap-1 text-xs text-[#FF4D8D] hover:text-pink-300 transition-colors bg-[#FF4D8D]/10 px-3 py-1.5 rounded-lg"
-        >
-          <Plus size={12} /> Add Product
-        </button>
+        <div className="flex items-center gap-2">
+
+          {/* Status */}
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleSubcategory(sub.id, sub.isActive);
+            }}
+            className="cursor-pointer"
+          >
+            <StatusBadge status={sub.isActive ? "Active" : "Inactive"} />
+          </div>
+
+          {/* Add Product */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setAddProductOpen(true);
+            }}
+            className="flex items-center gap-1 text-xs text-[#FF4D8D] hover:text-pink-300 bg-[#FF4D8D]/10 px-3 py-1.5 rounded-lg"
+          >
+            <Plus size={12} /> Add
+          </button>
+
+          {/* Delete */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (confirm("Delete subcategory?")) {
+                deleteSubcategory(sub.id);
+              }
+            }}
+            className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400"
+          >
+            <Trash2 size={12} />
+          </button>
+
+        </div>
+
       </button>
 
       {open && (
@@ -140,7 +251,8 @@ function SubcategoryAccordion({ sub, category }: { sub: Subcategory; category: C
                 </span>
               </div>
               <div className="flex gap-2">
-                <button className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-[#94A3B8] hover:text-white transition-all text-xs">
+                <button className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-[#94A3B8] hover:text-white transition-all text-xs"
+                  onClick={() => setEditProduct(p)}>
                   <Pencil size={11} /> Edit
                 </button>
                 <button
@@ -158,17 +270,48 @@ function SubcategoryAccordion({ sub, category }: { sub: Subcategory; category: C
       <Modal open={addProductOpen} onClose={() => setAddProductOpen(false)} title={`Add Product to ${sub.name}`} size="lg">
         <ProductForm categoryId={category.id} subcategoryId={sub.id} onClose={() => setAddProductOpen(false)} />
       </Modal>
+
+      {/* Edit Product Modal */}
+      <Modal
+        open={!!editProduct}
+        onClose={() => setEditProduct(null)}
+        title="Edit Product"
+      >
+        {editProduct && (
+          <ProductForm
+            categoryId={editProduct.categoryId}
+            subcategoryId={editProduct.subcategoryId}
+            onClose={() => setEditProduct(null)}
+            initialData={editProduct}
+            isEdit
+          />
+        )}
+      </Modal>
     </div>
   );
 }
 
 export default function ProductsPage() {
-  const { categories, addCategory, addSubcategory } = useCategoryStore();
+  const { categories, addCategory, addSubcategory, fetchCategories, deleteCategory, toggleCategory } = useCategoryStore();
   const [selectedCat, setSelectedCat] = useState<Category | null>(null);
   const [addCatOpen, setAddCatOpen] = useState(false);
   const [addSubOpen, setAddSubOpen] = useState(false);
   const [catForm, setCatForm] = useState({ name: '', image: '' });
   const [subForm, setSubForm] = useState({ name: '' });
+
+  useEffect(() => {
+    if (!selectedCat) return;
+
+    const fresh = categories.find(c => c.id === selectedCat.id);
+    if (fresh) setSelectedCat(fresh);
+
+  }, [categories]);
+
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -199,8 +342,30 @@ export default function ProductsPage() {
                     <div className="text-white font-semibold text-sm" style={{ fontFamily: 'Sora,sans-serif' }}>{cat.name}</div>
                     <div className="text-[#94A3B8] text-xs mt-0.5">{cat.subcategories.length} subcategories · {cat.productCount} products</div>
                   </div>
-                  <div className="text-[#FF4D8D] text-xs flex items-center gap-1">Manage <ChevronRight size={12} /></div>
+                  <div className="text-[#FF4D8D] text-xs flex items-center gap-1">Manage <ChevronRight size={12} />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm("Delete category?")) {
+                          deleteCategory(cat.id);
+                        }
+                      }}
+                      className="absolute top-3 right-3 p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 opacity-0 group-hover:opacity-100 transition"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleCategory(cat.id, cat.isActive);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <StatusBadge status={cat.isActive ? "Active" : "Inactive"} />
+                  </div>
                 </button>
+
               ))}
             </div>
           </div>
@@ -259,6 +424,7 @@ export default function ProductsPage() {
           </div>
         </form>
       </Modal>
+
     </div>
   );
 }

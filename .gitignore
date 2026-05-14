@@ -37,3 +37,8 @@ Thumbs.db
 
 backend/firebase-service-account.json
 backend/alemic
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
