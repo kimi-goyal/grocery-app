@@ -23,12 +23,10 @@ from app.config.database import Base
 # -------------------------------------------------
 from app.models.user_model import User          # noqa
 from app.models.otp_model import OTP            # noqa
-from app.models.product_model import Product    # noqa
-from app.models.category_model import Category  # noqa
-from app.models.cart_model import Cart          # noqa
-from app.models.cart_item_model import CartItem # noqa
-from app.models.order_model import Order        # noqa
-from app.models.order_item_model import OrderItem # noqa
+from app.models.product import Product,Category,Subcategory  # noqa
+from app.models.order import Order, OrderItem    # noqa
+from app.models.coupon import Coupon            # noqa
+
  
 # -------------------------------------------------
  

@@ -10,11 +10,12 @@ class Settings(BaseSettings):
 
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     REFRESH_TOKEN_EXPIRE_DAYS: int
-
+    
     SMTP_SERVER: str
     SMTP_PORT: int
     EMAIL_ADDRESS: str
     EMAIL_PASSWORD: str
+    UPLOAD_DIR: str = "uploads"
 
     class Config:
         env_file = ".env"
