@@ -125,16 +125,7 @@ export default function HomePage() {
             </div>
           )}
 
-          {isAuthenticated && (
-            <div className="flex justify-end">
-              <button
-                onClick={() => { logout(); window.location.href = '/'; }}
-                className="btn-social text-sm px-5 py-2 text-gray-500"
-              >
-                Logout
-              </button>
-            </div>
-          )}
+          
         </main>
       </div>
 
