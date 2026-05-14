@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist, subscribeWithSelector } from "zustand/middleware";
 import { authService } from "../services/authService";
-import { tokenManager } from "../lib/tokenManager";
 import type {
   RegisterPayload,
   LoginPayload,
@@ -40,7 +39,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
   subscribeWithSelector(
     persist(
-      (set, get) => ({
+      (set) => ({
         user: null,
         isAuthenticated: false,
         isGuest: false,
@@ -109,7 +108,7 @@ export const useAuthStore = create<AuthState>()(
         login: async (data) => {
           set({ loading: true, error: null, fieldErrors: {} });
           try {
-            await authService.login(data); // sets tokens via tokenManager
+            await authService.login(data); // backend sets auth cookies
             const me = await authService.getMe();
             set({
               loading: false,
@@ -204,20 +203,21 @@ export const useAuthStore = create<AuthState>()(
         // ─── Init (app start) ────────────────────────────────────────────────
         // Called on app mount to validate stored token and hydrate user
         initAuth: async () => {
-          if (!tokenManager.getAccess() && !tokenManager.getRefresh()) return;
           try {
             const me = await authService.getMe();
             set({ user: me, isAuthenticated: true, isGuest: false });
           } catch {
-            // tokens invalid / refresh failed → clean state
-            tokenManager.clearTokens();
             set({ user: null, isAuthenticated: false });
           }
         },
 
         // ─── Logout ──────────────────────────────────────────────────────────
-        logout: () => {
-          authService.logout();
+        logout: async () => {
+          try {
+            await authService.logout();
+          } catch {
+            // ignore logout failures, just clear client state
+          }
           set({
             user: null,
             isAuthenticated: false,

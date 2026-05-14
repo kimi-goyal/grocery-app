@@ -90,8 +90,8 @@ def create_access_token(payload: Dict[str, Any]) -> str:
 
     return jwt.encode(
         data,
-        getattr(settings, "SECRET_KEY", settings.JWT_SECRET_KEY),
-        algorithm=getattr(settings, "ALGORITHM", settings.JWT_ALGORITHM),
+        getattr(settings, "SECRET_KEY", settings.SECRET_KEY),
+        algorithm=getattr(settings, "ALGORITHM", settings.ALGORITHM),
     )
 
 
@@ -104,8 +104,8 @@ def create_refresh_token(payload: Dict[str, Any]) -> str:
 
     return jwt.encode(
         data,
-        getattr(settings, "REFRESH_SECRET_KEY", settings.JWT_SECRET_KEY),
-        algorithm=getattr(settings, "ALGORITHM", settings.JWT_ALGORITHM),
+        getattr(settings, "REFRESH_SECRET_KEY", settings.SECRET_KEY),
+        algorithm=getattr(settings, "ALGORITHM", settings.ALGORITHM),
     )
 
 
@@ -115,8 +115,8 @@ def decode_access_token(token: str) -> Dict[str, Any]:
     try:
         return jwt.decode(
             token,
-            getattr(settings, "SECRET_KEY", settings.JWT_SECRET_KEY),
-            algorithms=[getattr(settings, "ALGORITHM", settings.JWT_ALGORITHM)],
+            getattr(settings, "SECRET_KEY", settings.SECRET_KEY),
+            algorithms=[getattr(settings, "ALGORITHM", settings.ALGORITHM)],
         )
     except JWTError:
         raise HTTPException(
@@ -129,8 +129,8 @@ def decode_refresh_token(token: str) -> Dict[str, Any]:
     try:
         return jwt.decode(
             token,
-            getattr(settings, "REFRESH_SECRET_KEY", settings.JWT_SECRET_KEY),
-            algorithms=[getattr(settings, "ALGORITHM", settings.JWT_ALGORITHM)],
+            getattr(settings, "REFRESH_SECRET_KEY", settings.SECRET_KEY),
+            algorithms=[getattr(settings, "ALGORITHM", settings.ALGORITHM)],
         )
     except JWTError:
         raise HTTPException(

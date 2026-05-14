@@ -121,6 +121,38 @@
 #         "token_type": "bearer",
 #     }
 
+def admin_login_user(db: Session, data: UserLogin):
+    user = get_user_by_identifier(db, data.username)
+
+    if not user or not verify_password(data.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+        )
+
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email not verified",
+        )
+
+    if user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+
+    payload = {
+        "user_id": user.id,
+        "role": user.role,
+    }
+
+    return {
+        "access_token": create_access_token(payload),
+        "refresh_token": create_refresh_token(payload),
+        "token_type": "bearer",
+    }
+
 # def verify_otp(db: Session, email: str, otp: str) -> None:
 #     normalized_email = email.strip().lower()
 #     stored = pending_otps.get(normalized_email)

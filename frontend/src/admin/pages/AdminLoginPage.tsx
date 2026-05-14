@@ -5,7 +5,7 @@ import { useAdminAuthStore } from '../store/adminAuthStore';
 import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState('admin@freshcart.com');
+  const [email, setEmail] = useState('vidishakharbanda20@gmail.com');
   const [password, setPassword] = useState('admin123');
   const [showPass, setShowPass] = useState(false);
   const { login, loading, error } = useAdminAuthStore();
@@ -49,7 +49,7 @@ export default function AdminLoginPage() {
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="admin@freshcart.com"
+              placeholder="vidishakharbanda20@gmail.com"
               required
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#FF4D8D]/50 transition-all"
             />
@@ -95,7 +95,7 @@ export default function AdminLoginPage() {
           </button>
 
           <p className="text-center text-xs text-[#94A3B8] mt-2">
-            Demo: <span className="text-white">admin@freshcart.com</span> / <span className="text-white">admin123</span>
+            Demo: <span className="text-white">vidishakharbanda20@gmail.com</span> / <span className="text-white">admin123</span>
           </p>
         </form>
       </div>
