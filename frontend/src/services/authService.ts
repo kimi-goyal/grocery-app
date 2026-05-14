@@ -1,5 +1,4 @@
 import { publicApi, privateApi } from "./api";
-import { tokenManager } from "../lib/tokenManager";
 
 export interface RegisterPayload {
   name: string;
@@ -36,7 +35,6 @@ export const authService = {
 
   login: async (data: LoginPayload): Promise<AuthTokens> => {
     const res = await publicApi.post<AuthTokens>("/auth/login", data);
-    tokenManager.setTokens(res.data.access_token, res.data.refresh_token);
     return res.data;
   },
 
@@ -49,20 +47,17 @@ export const authService = {
   getMe: (): Promise<MeResponse> =>
     privateApi.get("/auth/me").then((r) => r.data),
 
-  refresh: (refreshToken: string) =>
-    publicApi
-      .post<AuthTokens>("/auth/refresh", { refresh_token: refreshToken })
-      .then((r) => r.data),
+  refresh: () =>
+    publicApi.post<AuthTokens>("/auth/refresh").then((r) => r.data),
 
-  logout: () => {
-    tokenManager.clearTokens();
+  logout: async () => {
+    await publicApi.post("/auth/logout");
   },
- googleLogin: async (idToken: string): Promise<AuthTokens> => {
-  const res = await publicApi.post<AuthTokens>("/auth/google", {
-    id_token: idToken,
-  });
+  googleLogin: async (idToken: string): Promise<AuthTokens> => {
+    const res = await publicApi.post<AuthTokens>("/auth/google", {
+      id_token: idToken,
+    });
 
-  tokenManager.setTokens(res.data.access_token, res.data.refresh_token);
-  return res.data;
-},
+    return res.data;
+  },
 };

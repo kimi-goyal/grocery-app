@@ -10,29 +10,78 @@ interface AdminAuthState {
   loading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  initAuth: () => Promise<void>;
 }
 
 export const useAdminAuthStore = create<AdminAuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       admin: null, isAdminAuthenticated: false, loading: false, error: null,
       login: async (email, password) => {
         set({ loading: true, error: null });
-        // Future API consumption flow:
-        // 1. POST /management/auth/login with { email, password }
-        // 2. Validate role === 'admin' from response
-        // 3. Store JWT token in localStorage
-        // 4. Set admin state from response.data.admin
-        await new Promise(r => setTimeout(r, 800));
-        if (email === MOCK_ADMIN.email && password === MOCK_ADMIN.password) {
-          set({ admin: { email, name: MOCK_ADMIN.name, role: 'admin' }, isAdminAuthenticated: true, loading: false });
-          return true;
+        try {
+          const response = await fetch('/api/v1/auth/admin-login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ username: email, password }),
+          });
+          if (response.ok) {
+            const data = await response.json();
+            // Get user info from /auth/me
+            const meResponse = await fetch('/api/v1/auth/me', {
+              credentials: 'include',
+            });
+            if (meResponse.ok) {
+              const meData = await meResponse.json();
+              set({ admin: { email: meData.email, name: meData.name, role: meData.role }, isAdminAuthenticated: true, loading: false });
+            } else {
+              set({ admin: { email, name: 'Admin User', role: 'admin' }, isAdminAuthenticated: true, loading: false });
+            }
+            return true;
+          } else {
+            const errorData = await response.json();
+            set({ error: errorData.detail || 'Login failed', loading: false });
+            return false;
+          }
+        } catch (error) {
+          set({ error: 'Network error', loading: false });
+          return false;
         }
-        set({ error: 'Invalid credentials', loading: false });
-        return false;
       },
-      logout: () => set({ admin: null, isAdminAuthenticated: false }),
+      logout: async () => {
+        try {
+          await fetch('/api/v1/auth/logout', {
+            method: 'POST',
+            credentials: 'include',
+          });
+        } catch (error) {
+          console.error('Logout error:', error);
+        }
+        set({ admin: null, isAdminAuthenticated: false });
+      },
+      initAuth: async () => {
+        try {
+          const response = await fetch('/api/v1/auth/me', {
+            credentials: 'include',
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (data.role === 'admin') {
+              set({ admin: { email: data.email, name: data.name, role: data.role }, isAdminAuthenticated: true });
+            } else {
+              set({ admin: null, isAdminAuthenticated: false });
+            }
+          } else {
+            set({ admin: null, isAdminAuthenticated: false });
+          }
+        } catch (error) {
+          set({ admin: null, isAdminAuthenticated: false });
+        }
+      },
     }),
     { name: 'freshcart-admin-auth' }
   )

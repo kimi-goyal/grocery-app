@@ -23,21 +23,23 @@ from app.routers import (
 
 import app.core.firebase_admin  # Initialize Firebase Admin SDK
 
-import app.core.firebase_admin  # Initialize Firebase Admin SDK
-
-import app.core.firebase_admin  # Initialize Firebase Admin SDK
-
 app = FastAPI(
     title="QuickBite Backend",
     lifespan=lifespan,
     debug=True
 )
+from fastapi.middleware.cors import CORSMiddleware
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173"],  # ✅ frontend URL
+    allow_credentials=True,  # ✅ REQUIRED FOR COOKIES
     allow_methods=["*"],
     allow_headers=["*"],
 )
+os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+
 
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
