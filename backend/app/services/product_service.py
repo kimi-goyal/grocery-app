@@ -184,5 +184,5 @@ async def save_product_image(file: UploadFile) -> str:
     content = await file.read()
     with open(filepath, "wb") as f:
         f.write(content)
-    return f"/uploads/{filename}"
+    return f"http://localhost:8000/uploads/{filename}"
 

@@ -24,6 +24,7 @@ from app.config.settings import settings
 
 def create_access_token(data: dict) -> str:
     payload = data.copy()
+    payload["type"] = "access"
     payload["exp"] = datetime.utcnow() + timedelta(
         minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
@@ -32,6 +33,7 @@ def create_access_token(data: dict) -> str:
 
 def create_refresh_token(data: dict) -> str:
     payload = data.copy()
+    payload["type"] = "refresh"
     payload["exp"] = datetime.utcnow() + timedelta(
         days=settings.REFRESH_TOKEN_EXPIRE_DAYS
     )

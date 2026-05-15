@@ -16,10 +16,6 @@ export const tokenManager = {
     localStorage.removeItem(REFRESH_KEY);
   },
 
-  /**
-   * Decode JWT payload without a library.
-   * Returns null if token is malformed or expired.
-   */
   decodePayload: (token: string): Record<string, any> | null => {
     try {
       const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');

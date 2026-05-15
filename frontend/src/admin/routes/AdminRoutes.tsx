@@ -1,5 +1,6 @@
 
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import AdminLoginPage from '../pages/AdminLoginPage';
 import AdminLayout from '../components/AdminLayout';
 import AdminProtectedRoute from '../components/AdminProtectedRoute';
@@ -9,8 +10,15 @@ import OrdersPage from '../pages/OrderPage';
 import CustomersPage from '../pages/CustomersPage';
 import InventoryPage from '../pages/InventoryPage';
 import CouponsPage from '../pages/CouponsPage';
+import { useAdminAuthStore } from '../store/adminAuthStore';
 
 export default function AdminRoutes() {
+  const { initAuth } = useAdminAuthStore();
+
+  useEffect(() => {
+    initAuth();
+  }, []);
+
   return (
     <Routes>
       <Route path="login" element={<AdminLoginPage />} />
