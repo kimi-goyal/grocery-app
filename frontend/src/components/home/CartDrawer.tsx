@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 export default function CartDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { items, updateQty, removeItem, totalPrice, clearCart } = useCartStore();
   const navigate = useNavigate();
-  console.log("CartDrawer items", items); // ✅ DEBUG LOG
+  
 
   return (
     <>

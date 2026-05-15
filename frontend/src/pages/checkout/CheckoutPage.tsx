@@ -103,7 +103,7 @@ import OrderConfirmed from '../../components/checkout/OrderConfirmed';
 import OrderSummaryPanel from '../../components/checkout/OrderSummaryPanel';
 
 export default function CheckoutPage() {
-  const { step, reset } = useCheckoutStore();
+  const { step, reset, orderNumber } = useCheckoutStore();
   const { items, fetchCart } = useCartStore();
   const { isAuthenticated, isGuest } = useAuthStore();
   const navigate = useNavigate();
@@ -123,10 +123,12 @@ export default function CheckoutPage() {
 
   // Redirect if cart is empty and not on confirmed step
   useEffect(() => {
-    if (items.length === 0 && step < 4) {
+    // If cart becomes empty while user hasn't confirmed, redirect home.
+    // Skip redirect when an order was just placed (orderNumber set) to avoid a race with clearCart.
+    if (items.length === 0 && step < 4 && !orderNumber) {
       navigate('/home');
     }
-  }, [items, step]);
+  }, [items, step, orderNumber]);
 
   const isConfirmed = step === 4;
 

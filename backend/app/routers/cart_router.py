@@ -23,5 +23,5 @@ def update_cart(data: CartItemCreate, db: Session = Depends(get_db), user=Depend
 
 
 @router.delete("/remove/{product_id}")
-def remove(product_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def remove(product_id: str, db: Session = Depends(get_db), user=Depends(get_current_user)):
     return cart_service.remove_from_cart(db, user["user_id"], product_id)

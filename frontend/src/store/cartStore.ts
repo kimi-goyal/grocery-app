@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { privateApi } from "../services/api";
 
 type CartItem = {
   id: number;
@@ -30,11 +31,8 @@ export const useCartStore = create<CartState>((set, get) => ({
   // ✅ FETCH CART
   fetchCart: async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/v1/cart", {
-        credentials: "include",
-      });
-
-      const data = await res.json();
+      const res = await privateApi.get("/cart");
+      const data = res.data;
       set({ items: Array.isArray(data) ? data : [] });
 
     } catch (err) {
@@ -44,17 +42,12 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   // ✅ ADD ITEM
   addItem: async (product_id) => {
-    await fetch("http://localhost:8000/api/v1/cart/add", {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        product_id,
-        qty: 1,
-      }),
-    });
+    try {
+      await privateApi.post("/cart/add", { product_id, qty: 1 });
+    } catch (err) {
+      console.error("addItem error", err);
+      throw err;
+    }
 
     await get().fetchCart();
     window.dispatchEvent(new Event("cartUpdated"));
@@ -62,17 +55,12 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   // ✅ UPDATE QTY
   updateQty: async (product_id, qty) => {
-    await fetch("http://localhost:8000/api/v1/cart/update", {
-      method: "PATCH",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        product_id,
-        qty,
-      }),
-    });
+    try {
+      await privateApi.patch("/cart/update", { product_id, qty });
+    } catch (err) {
+      console.error("updateQty error", err);
+      throw err;
+    }
 
     await get().fetchCart();
     window.dispatchEvent(new Event("cartUpdated"));
@@ -80,10 +68,12 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   // ✅ REMOVE ITEM
   removeItem: async (product_id) => {
-    await fetch(`http://localhost:8000/api/v1/cart/remove/${product_id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
+    try {
+      await privateApi.delete(`/cart/remove/${product_id}`);
+    } catch (err) {
+      console.error("removeItem error", err);
+      throw err;
+    }
 
     await get().fetchCart();
     window.dispatchEvent(new Event("cartUpdated"));
@@ -95,9 +85,9 @@ export const useCartStore = create<CartState>((set, get) => ({
 
     await Promise.all(
       items.map((item) =>
-        fetch(`http://localhost:8000/api/v1/cart/remove/${item.product_id}`, {
-          method: "DELETE",
-          credentials: "include",
+        privateApi.delete(`/cart/remove/${item.product_id}`).catch((err) => {
+          console.error("clearCart item remove error", err);
+          // continue removing other items even if one fails
         })
       )
     );

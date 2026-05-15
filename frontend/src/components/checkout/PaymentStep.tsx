@@ -50,8 +50,8 @@ export default function PaymentStep() {
                 coupon_code: couponResult?.valid ? couponCode : undefined,
             });
             setOrderNumber(res.order_number);
-            await clearCart();
             setStep(4);
+            await clearCart();
         } catch (e: unknown) {
             setError(getApiErrorMessage(e, 'Failed to place order. Please try again.'));
         } finally {
@@ -146,8 +146,8 @@ export default function PaymentStep() {
                         });
 
                         setOrderNumber(res.order_number);
-                        await clearCart();
                         setStep(4);
+                        await clearCart();
 
                     } catch (err: any) {
                         setError(getApiErrorMessage(err, "Order failed after payment."));

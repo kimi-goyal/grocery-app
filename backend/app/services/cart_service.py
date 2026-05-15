@@ -20,7 +20,7 @@ def get_cart(db: Session, user_id: int):
 
     return result
 
-def add_to_cart(db: Session, user_id: int, product_id: int, qty: int):
+def add_to_cart(db: Session, user_id: int, product_id: str, qty: int):
     item = db.query(CartItem).filter(
         CartItem.user_id == user_id,
         CartItem.product_id == product_id
@@ -41,7 +41,7 @@ def add_to_cart(db: Session, user_id: int, product_id: int, qty: int):
     return item
 
 
-def update_cart(db: Session, user_id: int, product_id: int, qty: int):
+def update_cart(db: Session, user_id: int, product_id: str, qty: int):
     item = db.query(CartItem).filter(
         CartItem.user_id == user_id,
         CartItem.product_id == product_id
@@ -59,7 +59,7 @@ def update_cart(db: Session, user_id: int, product_id: int, qty: int):
     return item
 
 
-def remove_from_cart(db: Session, user_id: int, product_id: int):
+def remove_from_cart(db: Session, user_id: int, product_id: str):
     item = db.query(CartItem).filter(
         CartItem.user_id == user_id,
         CartItem.product_id == product_id
