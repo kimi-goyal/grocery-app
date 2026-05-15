@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import WelcomePage from "../pages/entry/WelcomePage";
 import AuthLayout from "../layouts/AuthLayout";
 import HomePage from "../pages/home/HomePage";
+import CheckoutPage from "../pages/checkout/CheckoutPage";
 import ProfilePage from "../pages/profile/ProfilePage";
 import ProtectedRoute from "../components/common/ProtectedRoute";
 import PublicRoute from "../components/common/PublicRoute";
@@ -34,6 +35,15 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute>
             <HomePage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/checkout"
+        element={
+          <ProtectedRoute>
+            <CheckoutPage />
           </ProtectedRoute>
         }
       />

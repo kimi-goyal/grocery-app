@@ -20,6 +20,7 @@ from app.routers import (
     admin_coupon_router,
     admin_dashboard_router,
 )
+from app.routers.payment_router import router as payment_router
 
 import app.core.firebase_admin  # Initialize Firebase Admin SDK
 
@@ -51,6 +52,7 @@ app.include_router(admin_product_router.router)
 app.include_router(admin_order_router.router)
 app.include_router(admin_customer_router.router)
 app.include_router(admin_coupon_router.router)
+app.include_router(payment_router)
 
 
 @app.get("/")

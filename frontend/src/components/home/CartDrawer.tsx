@@ -72,7 +72,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                 <span className="text-[#ff4d6d]">₹{totalPrice()}</span>
               </div>
             </div>
-            <button className="btn-primary glow-pink" onClick={() => { onClose(); navigate('/home'); }}>
+            <button className="btn-primary glow-pink" onClick={() => { onClose(); navigate('/checkout'); }}>
               Proceed to Checkout — ₹{totalPrice()}
             </button>
           </div>
