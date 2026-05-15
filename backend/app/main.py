@@ -19,8 +19,9 @@ from app.routers import (
     admin_customer_router,
     admin_coupon_router,
     admin_dashboard_router,
+    address_router, payment_router, order_router
 )
-from app.routers.payment_router import router as payment_router
+
 
 import app.core.firebase_admin
 from app.routers import payment_router  # Initialize Firebase Admin SDK
@@ -60,7 +61,8 @@ app.include_router(admin_order_router.router)
 app.include_router(admin_customer_router.router)
 app.include_router(admin_coupon_router.router)
 app.include_router(payment_router.router)
-
+app.include_router(address_router.router)
+app.include_router(order_router.router)
 
 @app.get("/")
 def health():

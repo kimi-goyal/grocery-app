@@ -7,7 +7,7 @@ import CheckoutPage from "../pages/checkout/CheckoutPage";
 import ProfilePage from "../pages/profile/ProfilePage";
 import ProtectedRoute from "../components/common/ProtectedRoute";
 import PublicRoute from "../components/common/PublicRoute";
-import CheckoutPage from "../pages/checkout/CheckoutPage";
+
 
 export default function AppRoutes() {
   return (
@@ -58,14 +58,6 @@ export default function AppRoutes() {
         }
       />
 
-      <Route
-        path="/checkout"
-        element={
-          <ProtectedRoute>
-            <CheckoutPage />
-          </ProtectedRoute>
-        }
-      />
 
       <Route path="*" element={<Navigate to="/" />} />
 

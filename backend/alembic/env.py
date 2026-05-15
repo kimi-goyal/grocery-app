@@ -27,6 +27,7 @@ from app.models.product import Product,Category,Subcategory  # noqa
 from app.models.order import Order, OrderItem    # noqa
 from app.models.coupon import Coupon   
 from app.models.cart import  CartItem   # noqa
+from app.models.address import Address  # noqa
 
  
 # -------------------------------------------------
