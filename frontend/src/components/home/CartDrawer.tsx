@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 export default function CartDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { items, updateQty, removeItem, totalPrice, clearCart } = useCartStore();
   const navigate = useNavigate();
+  console.log("CartDrawer items", items); // ✅ DEBUG LOG
 
   return (
     <>
@@ -13,14 +14,14 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
         <div className="flex items-center justify-between p-5 border-b border-white/8">
           <div>
             <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'Sora,sans-serif' }}>My Cart</h3>
-            <p className="text-gray-400 text-xs">{items.length} item(s)</p>
+            <p className="text-gray-400 text-xs">{items.reduce((acc, i) => acc + i.qty, 0)} item(s)</p>
           </div>
           <div className="flex gap-2">
             {items.length > 0 && (
               <button onClick={clearCart} className="text-xs text-[#ff4d6d] hover:text-pink-300 transition-colors px-2 py-1">Clear All</button>
             )}
             <button onClick={onClose} className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
             </button>
           </div>
         </div>
@@ -45,13 +46,13 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                 <p className="text-[#ff4d6d] text-sm font-bold mt-1">₹{item.price * item.qty}</p>
               </div>
               <div className="flex flex-col items-end gap-2">
-                <button onClick={() => removeItem(item.id)} className="text-gray-600 hover:text-[#ff4d6d] transition-colors">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                <button onClick={() => removeItem(item.product_id)}  className="text-gray-600 hover:text-[#ff4d6d] transition-colors">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
                 </button>
                 <div className="flex items-center gap-1.5 bg-[#ff4d6d]/10 border border-[#ff4d6d]/20 rounded-lg px-2 py-0.5">
-                  <button onClick={() => updateQty(item.id, item.qty - 1)} className="text-[#ff4d6d] font-bold text-sm">−</button>
+                  <button onClick={() => updateQty(item.product_id, item.qty - 1)} className="text-[#ff4d6d] font-bold text-sm">−</button>
                   <span className="text-white text-xs font-bold w-4 text-center">{item.qty}</span>
-                  <button onClick={() => updateQty(item.id, item.qty + 1)} className="text-[#ff4d6d] font-bold text-sm">+</button>
+                  <button onClick={() => updateQty(item.product_id, item.qty + 1)} className="text-[#ff4d6d] font-bold text-sm">+</button>
                 </div>
               </div>
             </div>
@@ -60,6 +61,36 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
 
         {items.length > 0 && (
           <div className="p-4 border-t border-white/8 space-y-3">
+            {/* ✅ COUPON SUGGESTIONS */}
+            <div className="space-y-2">
+              <div className="text-xs text-gray-400">Available offers</div>
+
+              <div className="flex flex-col gap-2">
+
+                <div className="bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2 text-xs flex justify-between items-center">
+                  <span>🔥 SAVE10 — 10% OFF</span>
+                  <button className="text-green-400 font-bold">Apply</button>
+                </div>
+
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg px-3 py-2 text-xs flex justify-between items-center">
+                  <span>🎉 ₹100 OFF above ₹499</span>
+                  <button className="text-blue-400 font-bold">Apply</button>
+                </div>
+
+              </div>
+            </div>
+            {/* ✅ COUPON BOX */}
+            <div className="glass border border-white/8 rounded-xl p-3 flex items-center justify-between">
+              <input
+                type="text"
+                placeholder="Apply coupon code"
+                className="bg-transparent text-sm text-white outline-none w-full"
+              />
+
+              <button className="text-[#ff4d6d] text-xs font-bold ml-2">
+                APPLY
+              </button>
+            </div>
             <div className="glass border border-white/8 rounded-xl p-3 space-y-2 text-sm">
               <div className="flex justify-between text-gray-400">
                 <span>Subtotal</span><span className="text-white">₹{totalPrice()}</span>

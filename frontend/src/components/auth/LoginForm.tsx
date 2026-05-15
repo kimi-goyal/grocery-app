@@ -261,6 +261,7 @@ import {
   validateLoginForm,
   hasErrors,
 } from '../../utils/validators';
+import { useCartStore } from '../../store/cartStore';
 
 
 interface Props {
@@ -272,7 +273,7 @@ export default function LoginForm({ onSwitch, onNeedsOtp }: Props) {
   const [fields, setFields] = useState({ identifier: '', password: '' });
   const [touched, setTouched] = useState({ identifier: false, password: false });
   const [showPass, setShowPass] = useState(false);
-
+  const { fetchCart } = useCartStore(); 
   const { login, loading, error, clearError } = useAuthStore();
   const navigate = useNavigate();
 
@@ -300,6 +301,7 @@ export default function LoginForm({ onSwitch, onNeedsOtp }: Props) {
 
     try {
       await login({ username: fields.identifier.trim(), password: fields.password });
+      await fetchCart();
       navigate('/home');
     } catch (err: any) {
       const status = err?.response?.status;

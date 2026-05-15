@@ -31,6 +31,7 @@ function ProductForm({
       name: '',
       description: '',
       price: '',
+      selling_count: 0,
       mrp: '',
       stock: '',
       unit: 'kg',
@@ -70,6 +71,7 @@ function ProductForm({
         price: Number(form.price),
         mrp: Number(form.mrp),
         stock: Number(form.stock),
+        selling_count: Number(form.selling_count),
         unit: form.unit,
         sku: form.sku,
         image: form.image,
@@ -82,6 +84,7 @@ function ProductForm({
         price: Number(form.price),
         mrp: Number(form.mrp),
         stock: Number(form.stock),
+        selling_count: Number(form.selling_count),
         unit: form.unit,
         sku: form.sku,
         image: form.image,
@@ -144,6 +147,7 @@ function ProductForm({
         </div>
         <AdminInput label="Selling Price (₹) *" type="number" placeholder="120" value={form.price} onChange={e => set('price', e.target.value)} required />
         <AdminInput label="MRP (₹) *" type="number" placeholder="150" value={form.mrp} onChange={e => set('mrp', e.target.value)} required />
+         <AdminInput label="Selling Count" type="number" placeholder="0" value={form.selling_count} onChange={e => set('selling_count', e.target.value)} required />
         <AdminInput label="Stock Quantity *" type="number" placeholder="200" value={form.stock} onChange={e => set('stock', e.target.value)} required />
         <AdminSelect label="Unit" value={form.unit} onChange={e => set('unit', e.target.value)} options={units.map(u => ({ value: u, label: u }))} />
         <AdminInput label="SKU Code" placeholder="APP-RED-001" value={form.sku} onChange={e => set('sku', e.target.value)} hint="Leave blank to auto-generate" />

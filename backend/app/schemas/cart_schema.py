@@ -2,18 +2,39 @@ from pydantic import BaseModel
 from typing import List
 
 
-class CartAddRequest(BaseModel):
-    product_id: int
+class AddToCartRequest(BaseModel):
+    product_id: str
     quantity: int
 
 
-class CartItemResponse(BaseModel):
-    product_id: int
+class UpdateCartRequest(BaseModel):
+    product_id: str
     quantity: int
 
-    class Config:
-        from_attributes = True
+
+class CartResponseItem(BaseModel):
+    product_id: str
+    name: str
+    price: float
+    mrp: float
+    image_url: str
+    quantity: int
+    total: float
 
 
 class CartResponse(BaseModel):
-    items: List[CartItemResponse]
+    items: List[CartResponseItem]
+    total_amount: float
+
+
+class CartItemCreate(BaseModel):
+    product_id: str
+    qty: int = 1
+
+
+class CartItemOut(BaseModel):
+    id: int
+    product_id: str
+    qty: int
+
+    model_config = {"from_attributes": True}

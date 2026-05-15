@@ -1,66 +1,72 @@
-from fastapi import HTTPException
 from sqlalchemy.orm import Session
-
-from app.repositories.cart_repository import *
-from app.repositories.product_repository import get_product_by_id
-from app.models.cart_item_model import CartItem
+from app.models.cart import CartItem  
 
 
-def get_cart_service(db: Session, user_id: int):
-    cart = get_user_cart(db, user_id)
-    if not cart:
-        cart = create_cart(db, user_id)
-    return cart
+def get_cart(db: Session, user_id: int):
+    items = db.query(CartItem).filter(CartItem.user_id == user_id).all()
 
+    result = []
 
-def add_to_cart_service(db: Session, user_id: int, product_id: int, quantity: int):
-    product = get_product_by_id(db, product_id)
-    if not product or product.stock <= 0:
-        raise HTTPException(400, "Product out of stock")
+    for item in items:
+        result.append({
+            "id": item.id,
+            "product_id": item.product_id,
+            "qty": item.qty,
+            "name": item.product.name,
+            "price": item.product.price,
+            "image": item.product.image_url,
+            "unit": item.product.unit,
+        })
 
-    if quantity > product.stock:
-        raise HTTPException(400, "Quantity exceeds stock")
+    return result
 
-    cart = get_cart_service(db, user_id)
+def add_to_cart(db: Session, user_id: int, product_id: int, qty: int):
+    item = db.query(CartItem).filter(
+        CartItem.user_id == user_id,
+        CartItem.product_id == product_id
+    ).first()
 
-    item = get_cart_item(db, cart.id, product_id)
     if item:
-        item.quantity += quantity
+        item.qty += qty
     else:
         item = CartItem(
-            cart_id=cart.id,
+            user_id=user_id,
             product_id=product_id,
-            quantity=quantity,
+            qty=qty
         )
         db.add(item)
 
     db.commit()
-    return cart
+    db.refresh(item)
+    return item
 
 
-def update_cart_service(db: Session, user_id: int, product_id: int, quantity: int):
-    cart = get_cart_service(db, user_id)
-    item = get_cart_item(db, cart.id, product_id)
+def update_cart(db: Session, user_id: int, product_id: int, qty: int):
+    item = db.query(CartItem).filter(
+        CartItem.user_id == user_id,
+        CartItem.product_id == product_id
+    ).first()
 
     if not item:
-        raise HTTPException(404, "Item not in cart")
+        return None
 
-    if quantity <= 0:
+    if qty <= 0:
         db.delete(item)
     else:
-        item.quantity = quantity
+        item.qty = qty
 
     db.commit()
-    return cart
+    return item
 
 
-def remove_from_cart_service(db: Session, user_id: int, product_id: int):
-    cart = get_cart_service(db, user_id)
-    item = get_cart_item(db, cart.id, product_id)
+def remove_from_cart(db: Session, user_id: int, product_id: int):
+    item = db.query(CartItem).filter(
+        CartItem.user_id == user_id,
+        CartItem.product_id == product_id
+    ).first()
 
-    if not item:
-        raise HTTPException(404, "Item not in cart")
+    if item:
+        db.delete(item)
+        db.commit()
 
-    db.delete(item)
-    db.commit()
-    return cart
+    return {"ok": True}
