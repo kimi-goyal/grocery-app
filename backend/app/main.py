@@ -21,7 +21,8 @@ from app.routers import (
     admin_dashboard_router,
 )
 
-import app.core.firebase_admin  # Initialize Firebase Admin SDK
+import app.core.firebase_admin
+from app.routers import payment_router  # Initialize Firebase Admin SDK
 
 app = FastAPI(
     title="QuickBite Backend",
@@ -57,6 +58,7 @@ app.include_router(admin_product_router.router)
 app.include_router(admin_order_router.router)
 app.include_router(admin_customer_router.router)
 app.include_router(admin_coupon_router.router)
+app.include_router(payment_router.router)
 
 
 @app.get("/")
