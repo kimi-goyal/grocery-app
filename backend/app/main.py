@@ -10,7 +10,7 @@ from app.routers.auth_router import router as auth_router
 # #from app.routers.product_router import router as product_router
 # from app.routers.admin_router import router as admin_router
 # from app.routers.category_router import router as category_router
-# from app.routers.cart_router import router as cart_router
+from app.routers.cart_router import router as cart_router
 # from app.routers.order_router import router as order_router
 # from app.routers.user_router import router as user_router
 from app.routers import (
@@ -22,7 +22,8 @@ from app.routers import (
 )
 from app.routers.payment_router import router as payment_router
 
-import app.core.firebase_admin  # Initialize Firebase Admin SDK
+import app.core.firebase_admin
+from app.routers import payment_router  # Initialize Firebase Admin SDK
 
 app = FastAPI(
     title="QuickBite Backend",
@@ -50,7 +51,7 @@ app.include_router(auth_router, prefix="/api/v1")
 #app.include_router(product_router, prefix="/api/v1")
 # app.include_router(admin_router, prefix="/api/v1")
 # app.include_router(category_router, prefix="/api/v1")
-# app.include_router(cart_router, prefix="/api/v1")
+app.include_router(cart_router, prefix="/api/v1")
 # app.include_router(order_router, prefix="/api/v1")
 # app.include_router(user_router, prefix="/api/v1")
 app.include_router(admin_dashboard_router.router)
@@ -58,7 +59,7 @@ app.include_router(admin_product_router.router)
 app.include_router(admin_order_router.router)
 app.include_router(admin_customer_router.router)
 app.include_router(admin_coupon_router.router)
-app.include_router(payment_router)
+app.include_router(payment_router.router)
 
 
 @app.get("/")

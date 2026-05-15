@@ -1,12 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { useCartStore } from "../../store/cartStore";
 import RazorpayButton from "../../components/checkout/RazorpayButton";
-
+ 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCartStore();
   const navigate = useNavigate();
   const total = totalPrice();
-
+ 
   return (
     <div className="min-h-screen bg-[#090b13] text-white py-10 px-4 sm:px-8">
       <div className="mx-auto max-w-6xl">
@@ -22,7 +22,7 @@ export default function CheckoutPage() {
             Continue Shopping
           </button>
         </div>
-
+ 
         {items.length === 0 ? (
           <div className="rounded-3xl border border-white/10 bg-white/5 p-10 text-center">
             <p className="text-gray-400">Your cart is empty.</p>
@@ -53,13 +53,13 @@ export default function CheckoutPage() {
                 </div>
               ))}
             </div>
-
+ 
             <div className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-6">
               <div>
                 <h3 className="text-xl font-semibold">Order Summary</h3>
                 <p className="text-sm text-gray-400 mt-1">Pay securely with Razorpay.</p>
               </div>
-
+ 
               <div className="space-y-3 rounded-3xl bg-[#0f1720] p-4">
                 <div className="flex justify-between text-gray-400">
                   <span>Subtotal</span>
@@ -74,7 +74,7 @@ export default function CheckoutPage() {
                   <span className="font-semibold">₹{total}</span>
                 </div>
               </div>
-
+ 
               <RazorpayButton
                 amount={total}
                 onSuccess={() => {

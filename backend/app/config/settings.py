@@ -13,7 +13,8 @@ class Settings(BaseSettings):
 
     RAZORPAY_KEY_ID: str
     RAZORPAY_KEY_SECRET: str
-
+ 
+    
     SMTP_SERVER: str
     SMTP_PORT: int
     EMAIL_ADDRESS: str

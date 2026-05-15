@@ -1,50 +1,115 @@
+import { create } from "zustand";
 
-import { create } from 'zustand'; 
-import { persist } from 'zustand/middleware';
-
-export interface CartItem {
+type CartItem = {
   id: number;
+  product_id: string;
+  qty: number;
+
+  // optional UI fields (backend se aa sakte)
   name: string;
   price: number;
-  unit: string;
-  image: string;
-  qty: number;
-}
+  image?: string;
+  unit?: string;
+};
 
-interface CartState {
+type CartState = {
   items: CartItem[];
-  addItem: (item: Omit<CartItem, 'qty'>) => void;
-  removeItem: (id: number) => void;
-  updateQty: (id: number, qty: number) => void;
-  clearCart: () => void;
-  totalItems: () => number;
-  totalPrice: () => number;
-}
 
-export const useCartStore = create<CartState>()(
-  persist(
-    (set, get) => ({
-      items: [],
-      addItem: (item) => {
-        const existing = get().items.find(i => i.id === item.id);
-        if (existing) {
-          set(s => ({ items: s.items.map(i => i.id === item.id ? { ...i, qty: i.qty + 1 } : i) }));
-        } else {
-          set(s => ({ items: [...s.items, { ...item, qty: 1 }] }));
-        }
+  fetchCart: () => Promise<void>;
+  addItem: (product_id: string) => Promise<void>;
+  updateQty: (product_id: string, qty: number) => Promise<void>;
+  removeItem: (product_id: string) => Promise<void>;
+  clearCart: () => Promise<void>;
+
+  totalPrice: () => number;
+};
+
+export const useCartStore = create<CartState>((set, get) => ({
+  items: [],
+
+  // ✅ FETCH CART
+  fetchCart: async () => {
+    try {
+      const res = await fetch("http://localhost:8000/api/v1/cart", {
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      set({ items: Array.isArray(data) ? data : [] });
+
+    } catch (err) {
+      console.error("fetchCart error", err);
+    }
+  },
+
+  // ✅ ADD ITEM
+  addItem: async (product_id) => {
+    await fetch("http://localhost:8000/api/v1/cart/add", {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
       },
-      removeItem: (id) => set(s => ({ items: s.items.filter(i => i.id !== id) })),
-      updateQty: (id, qty) => {
-        if (qty <= 0) {
-          set(s => ({ items: s.items.filter(i => i.id !== id) }));
-        } else {
-          set(s => ({ items: s.items.map(i => i.id === id ? { ...i, qty } : i) }));
-        }
+      body: JSON.stringify({
+        product_id,
+        qty: 1,
+      }),
+    });
+
+    await get().fetchCart();
+    window.dispatchEvent(new Event("cartUpdated"));
+  },
+
+  // ✅ UPDATE QTY
+  updateQty: async (product_id, qty) => {
+    await fetch("http://localhost:8000/api/v1/cart/update", {
+      method: "PATCH",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
       },
-      clearCart: () => set({ items: [] }),
-      totalItems: () => get().items.reduce((s, i) => s + i.qty, 0),
-      totalPrice: () => get().items.reduce((s, i) => s + i.price * i.qty, 0),
-    }),
-    { name: 'freshcart-cart' }
-  )
-);
+      body: JSON.stringify({
+        product_id,
+        qty,
+      }),
+    });
+
+    await get().fetchCart();
+    window.dispatchEvent(new Event("cartUpdated"));
+  },
+
+  // ✅ REMOVE ITEM
+  removeItem: async (product_id) => {
+    await fetch(`http://localhost:8000/api/v1/cart/remove/${product_id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+
+    await get().fetchCart();
+    window.dispatchEvent(new Event("cartUpdated"));
+  },
+
+  // ✅ CLEAR CART
+  clearCart: async () => {
+    const items = get().items;
+
+    await Promise.all(
+      items.map((item) =>
+        fetch(`http://localhost:8000/api/v1/cart/remove/${item.product_id}`, {
+          method: "DELETE",
+          credentials: "include",
+        })
+      )
+    );
+
+    set({ items: [] });
+    window.dispatchEvent(new Event("cartUpdated"));
+  },
+
+  // ✅ TOTAL PRICE
+  totalPrice: () => {
+    return get().items.reduce((total, item) => {
+      return total + (item.price || 0) * item.qty;
+    }, 0);
+  },
+}));

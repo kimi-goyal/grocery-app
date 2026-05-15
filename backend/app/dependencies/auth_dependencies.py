@@ -32,5 +32,5 @@ def get_current_user(request: Request):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token type",
         )
-
+   
     return payload

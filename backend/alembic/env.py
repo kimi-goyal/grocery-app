@@ -25,7 +25,8 @@ from app.models.user_model import User          # noqa
 from app.models.otp_model import OTP            # noqa
 from app.models.product import Product,Category,Subcategory  # noqa
 from app.models.order import Order, OrderItem    # noqa
-from app.models.coupon import Coupon            # noqa
+from app.models.coupon import Coupon   
+from app.models.cart import  CartItem   # noqa
 
  
 # -------------------------------------------------

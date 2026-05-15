@@ -57,6 +57,7 @@ export type Product = {
   id: string;
   name: string;
   price: number;
+  selling_count: number;
   mrp: number;
   stock: number;
   unit: string;
@@ -130,6 +131,7 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
             id: p.id,
             name: p.name,
             price: p.price,
+            selling_count: p.selling_count,
             mrp: p.mrp,
             stock: p.stock,
             unit: p.unit,
@@ -217,6 +219,7 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
         name: product.name,
         description: product.description,
         price: product.price,
+        selling_count: product.selling_count,
         mrp: product.mrp,
         stock: product.stock,
         unit: product.unit,

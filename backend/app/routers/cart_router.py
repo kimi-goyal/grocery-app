@@ -1,63 +1,27 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-
-from app.dependencies.auth_dependencies import get_db
-from app.dependencies.auth_dependencies import get_current_user
-from app.schemas.cart_schema import CartAddRequest, CartResponse
-from app.services.cart_service import (
-    get_cart_service,
-    add_to_cart_service,
-    update_cart_service,
-    remove_from_cart_service,
-)
+from app.dependencies.auth_dependencies import get_db, get_current_user  # ✅ FIXED
+from app.services import cart_service
+from app.schemas.cart_schema import CartItemCreate
 
 router = APIRouter(prefix="/cart", tags=["Cart"])
 
 
-@router.get("/", response_model=CartResponse)
-def get_cart(
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
-):
-    return get_cart_service(db, current_user["user_id"])
+@router.get("/")
+def get_cart(db: Session = Depends(get_db), user=Depends(get_current_user)):
+    return cart_service.get_cart(db, user["user_id"])  # ✅ payload based
 
 
 @router.post("/add")
-def add_to_cart(
-    data: CartAddRequest,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
-):
-    return add_to_cart_service(
-        db,
-        current_user["user_id"],
-        data.product_id,
-        data.quantity,
-    )
+def add_to_cart(data: CartItemCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    return cart_service.add_to_cart(db, user["user_id"], data.product_id, data.qty)
 
 
-@router.put("/update")
-def update_cart(
-    data: CartAddRequest,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
-):
-    return update_cart_service(
-        db,
-        current_user["user_id"],
-        data.product_id,
-        data.quantity,
-    )
+@router.patch("/update")
+def update_cart(data: CartItemCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    return cart_service.update_cart(db, user["user_id"], data.product_id, data.qty)
 
 
-@router.delete("/remove")
-def remove_from_cart(
-    product_id: int,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
-):
-    return remove_from_cart_service(
-        db,
-        current_user["user_id"],
-        product_id,
-    )
+@router.delete("/remove/{product_id}")
+def remove(product_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    return cart_service.remove_from_cart(db, user["user_id"], product_id)
