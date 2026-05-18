@@ -1,29 +1,66 @@
+import { create } from "zustand";
 
+const API = "http://localhost:8000/api/v1/admin";
 
-import { create } from 'zustand';
-import { MOCK_ORDERS } from '../data/mockData';
+export type OrderStatus =
+  | "Pending"
+  | "Packed"
+  | "On the Way"
+  | "Delivered"
+  | "Cancelled";
 
-export type OrderStatus = 'Pending' | 'Packed' | 'On the Way' | 'Delivered' | 'Cancelled';
-export type Order = { id: string; customer: string; email: string; phone: string; amount: number; status: OrderStatus; date: string; items: number; address: string; };
+export type Order = {
+  id: string;
+  customer: string;
+  phone: string;
+  amount: number;
+  status: OrderStatus;
+  date: string;
+  items: number;
+};
 
 interface OrderState {
   orders: Order[];
   loading: boolean;
-  fetchOrders: () => void;
-  updateStatus: (id: string, status: OrderStatus) => void;
+  fetchOrders: () => Promise<void>;
+  updateStatus: (id: string, status: OrderStatus) => Promise<void>;
 }
 
 export const useOrderStore = create<OrderState>((set) => ({
-  orders: MOCK_ORDERS as Order[],
+  orders: [],
   loading: false,
-  fetchOrders: () => {
-    // Future: GET /api/admin/orders?page=1&limit=50, paginate store
+
+  fetchOrders: async () => {
     set({ loading: true });
-    setTimeout(() => set({ orders: MOCK_ORDERS as Order[], loading: false }), 300);
+    try {
+      const res = await fetch(`${API}`, {
+        credentials: "include", // ✅ important for cookies
+      });
+      const data = await res.json();
+      set({ orders: data, loading: false });
+    } catch (e) {
+      console.error(e);
+      set({ loading: false });
+    }
   },
-  updateStatus: (id, status) => {
-    // Future: PATCH /api/admin/orders/:id/status, optimistic update + toast
-    set(s => ({ orders: s.orders.map(o => o.id === id ? { ...o, status } : o) }));
+
+  updateStatus: async (id, status) => {
+    try {
+      await fetch(`${API}/${id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+        credentials: "include",
+      });
+
+      // ✅ optimistic update
+      set((s) => ({
+        orders: s.orders.map((o) =>
+          o.id === id ? { ...o, status } : o
+        ),
+      }));
+    } catch (e) {
+      console.error(e);
+    }
   },
 }));
-

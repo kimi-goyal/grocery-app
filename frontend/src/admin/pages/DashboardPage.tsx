@@ -4,7 +4,22 @@ import AdminTopbar from '../components/AdminTopbar';
 import StatCard from '../components/StatCard';
 import MiniChart from '../components/MiniChart';
 import StatusBadge from '../components/StatusBadge';
-import { MOCK_STATS, MOCK_ORDERS, MOCK_SALES_DATA } from '../data/mockData';
+import { useEffect, useState } from "react";
+
+
+type Stats = {
+  totalOrders: number;
+  totalRevenue: number;
+  customers: number;
+  recentOrders: any[];
+
+  // ✅ optional (for UI compatibility)
+  totalOrdersDelta?: number;
+  totalRevenueDelta?: number;
+  totalCustomersDelta?: number;
+  lowStockItems?: number;
+};
+
 
 export default function DashboardPage() {
   const topProducts = [
@@ -14,6 +29,17 @@ export default function DashboardPage() {
     { name: 'Potato', orders: 670, revenue: 26800, emoji: '🥔' },
   ];
 
+  const [stats, setStats] = useState<Stats | null>(null);
+
+  useEffect(() => {
+    fetch("http://localhost:8000/api/v1/admin/stats", {
+      credentials: "include",
+    })
+      .then((r) => r.json())
+      .then(setStats);
+  }, []);
+
+
   return (
     <div className="flex-1 overflow-y-auto">
       <AdminTopbar title="Dashboard Overview" />
@@ -21,10 +47,10 @@ export default function DashboardPage() {
 
         {/* Stat Cards */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 animate-fadeUp">
-          <StatCard label="Total Orders" value={MOCK_STATS.totalOrders} delta={MOCK_STATS.totalOrdersDelta} icon={ShoppingCart} color="#FF4D8D" />
-          <StatCard label="Total Revenue" value={MOCK_STATS.totalRevenue} delta={MOCK_STATS.totalRevenueDelta} icon={IndianRupee} color="#22C55E" prefix="₹" />
-          <StatCard label="Customers" value={MOCK_STATS.totalCustomers} delta={MOCK_STATS.totalCustomersDelta} icon={Users} color="#3b82f6" />
-          <StatCard label="Low Stock Items" value={MOCK_STATS.lowStockItems} icon={AlertTriangle} color="#f59e0b" />
+          <StatCard label="Total Orders" value={stats?.totalOrders || 0} delta={stats?.totalOrdersDelta} icon={ShoppingCart} color="#FF4D8D" />
+          <StatCard label="Total Revenue" value={stats?.totalRevenue || 0} delta={stats?.totalRevenueDelta} icon={IndianRupee} color="#22C55E" prefix="₹" />
+          <StatCard label="Customers" value={stats?.customers || 0} delta={stats?.totalCustomersDelta} icon={Users} color="#3b82f6" />
+          <StatCard label="Low Stock Items" value={stats?.lowStockItems || 0} icon={AlertTriangle} color="#f59e0b" />
         </div>
 
         {/* Chart + Top Products */}
@@ -91,7 +117,7 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {MOCK_ORDERS.slice(0, 5).map(o => (
+                {stats?.recentOrders?.slice(0, 5).map(o => (
                   <tr key={o.id} className="border-b border-white/5 hover:bg-white/2 transition-colors">
                     <td className="px-5 py-3 text-[#FF4D8D] text-sm font-mono">{o.id}</td>
                     <td className="px-5 py-3 text-white text-sm">{o.customer}</td>

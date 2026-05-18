@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import Optional
 from app.dependencies.auth_dependencies import get_db
@@ -6,54 +6,68 @@ from app.core.dependencies import require_admin
 from app.models.user_model import User
 from app.schemas.order import OrderOut, OrderStatusUpdate, PaginatedOrders
 from app.services import order_service
+from app.models.order import Order, OrderItem, OrderStatus
+from sqlalchemy import func
 
-router = APIRouter(prefix="/api/v1/admin", tags=["Admin — Orders"])
+router = APIRouter(
+    prefix="/api/v1/admin",
+    tags=["Admin — Orders"])
 
+@router.get("")
+def get_orders(db: Session = Depends(get_db)):
+    orders = db.query(Order).order_by(Order.created_at.desc()).all()
 
-@router.get("/orders", response_model=PaginatedOrders)
-def list_orders(
-    status: Optional[str] = Query(None),
-    search: Optional[str] = Query(None),
-    page: int = Query(1, ge=1),
-    limit: int = Query(50, ge=1, le=200),
-    db: Session = Depends(get_db),
-    _: User = Depends(require_admin),
-):
-    result = order_service.get_orders(db, status, search, page, limit)
-    orders_out = []
-    for o in result["orders"]:
-        orders_out.append({
-            "id": o.id,
-            "order_number": o.order_number,
-            "customer_name": o.customer_name,
-            "email": o.email,
+    result = []
+    for o in orders:
+        result.append({
+            "id": o.order_number,
+            "customer": o.customer_name,
             "phone": o.phone,
-            "total_amount": o.total_amount,
-            "status": o.status,
-            "items_count": len(o.items),
-            "created_at": o.created_at,
+            "items": len(o.items),
+            "amount": o.total_amount,
+            "status": o.status.value,
+            "date": o.created_at.strftime("%d %b %Y"),
         })
+
+    return result
+
+@router.get("/stats")
+def get_stats(db: Session = Depends(get_db)):
+
+    total_orders = db.query(Order).count()
+    total_revenue = db.query(func.sum(Order.total_amount)).scalar() or 0
+
+    customers = db.query(func.count(Order.user_id.distinct())).scalar()
+
+    recent_orders = db.query(Order).order_by(Order.created_at.desc()).limit(5).all()
+
     return {
-        "orders": orders_out,
-        "total": result["total"],
-        "page": result["page"],
-        "pages": result["pages"],
+        "totalOrders": total_orders,
+        "totalRevenue": total_revenue,
+        "customers": customers,
+        "recentOrders": [
+            {
+                "id": o.order_number,
+                "customer": o.customer_name,
+                "amount": o.total_amount,
+                "status": o.status.value,
+                "date": o.created_at.strftime("%d %b"),
+            } for o in recent_orders
+        ]
     }
 
-
-@router.get("/orders/{order_id}", response_model=OrderOut)
-def get_order(order_id: str, db: Session = Depends(get_db), _: User = Depends(require_admin)):
-    o = order_service.get_order(db, order_id)
-    return {**o.__dict__, "items_count": len(o.items)}
-
-
-@router.patch("/orders/{order_id}/status", response_model=OrderOut)
+@router.patch("/{order_id}/status")
 def update_order_status(
     order_id: str,
     data: OrderStatusUpdate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_admin),
 ):
-    o = order_service.update_order_status(db, order_id, data)
-    return {**o.__dict__, "items_count": len(o.items)}
+    order = db.query(Order).filter(Order.order_number == order_id).first()
 
+    if not order:
+        raise HTTPException(404, "Order not found")
+
+    order.status = data.status
+    db.commit()
+
+    return {"msg": "Updated"}

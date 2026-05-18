@@ -1,4 +1,3 @@
-
 import uuid
 from sqlalchemy import (
     Column, String, Float, Integer,
@@ -7,19 +6,19 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 import enum
 from app.config.database import Base
-
-
+ 
+ 
 class OrderStatus(str, enum.Enum):
     pending = "Pending"
     packed = "Packed"
     on_the_way = "On the Way"
     delivered = "Delivered"
     cancelled = "Cancelled"
-
-
+ 
+ 
 class Order(Base):
     __tablename__ = "orders"
-
+ 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     order_number = Column(String(20), unique=True, nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
@@ -35,14 +34,14 @@ class Order(Base):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
+ 
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
     user = relationship("User")
-
-
+ 
+ 
 class OrderItem(Base):
     __tablename__ = "order_items"
-
+ 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     order_id = Column(String, ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
     product_id = Column(String, ForeignKey("products.id", ondelete="SET NULL"), nullable=True)
@@ -51,6 +50,7 @@ class OrderItem(Base):
     quantity = Column(Integer, nullable=False)
     unit = Column(String(30), nullable=True)
     image_url = Column(String(500), nullable=True)
-
+ 
     order = relationship("Order", back_populates="items")
     product = relationship("Product")
+ 

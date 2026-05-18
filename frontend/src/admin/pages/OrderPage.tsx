@@ -6,11 +6,16 @@ import StatusBadge from '../components/StatusBadge';
 import { useOrderStore } from '../store/orderStore';
 import type { OrderStatus } from '../store/orderStore';
 import { Search, ChevronDown } from 'lucide-react';
+import { useEffect } from "react";
 
 const STATUSES: OrderStatus[] = ['Pending', 'Packed', 'On the Way', 'Delivered', 'Cancelled'];
 
 export default function OrdersPage() {
-  const { orders, updateStatus } = useOrderStore();
+  const { orders, updateStatus, fetchOrders } = useOrderStore();
+
+useEffect(() => {
+  fetchOrders();
+}, []);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);

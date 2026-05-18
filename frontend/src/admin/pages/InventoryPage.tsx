@@ -1,11 +1,11 @@
 
-import { useState } from 'react';
+import { useState, useEffect} from 'react';
 import AdminTopbar from '../components/AdminTopbar';
 import { useInventoryStore } from '../store/inventoryStore';
 import { AlertTriangle, Search } from 'lucide-react';
 
 export default function InventoryPage() {
-  const { items, updateStock } = useInventoryStore();
+ const { items, updateStock, fetchInventory } = useInventoryStore();
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editVal, setEditVal] = useState('');
@@ -21,6 +21,10 @@ export default function InventoryPage() {
     if (!isNaN(val) && val >= 0) updateStock(id, val);
     setEditingId(null);
   };
+
+  useEffect(() => {
+    fetchInventory();
+  }, []);
 
   return (
     <div className="flex-1 overflow-y-auto">
