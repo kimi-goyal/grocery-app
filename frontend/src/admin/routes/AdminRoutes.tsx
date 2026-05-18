@@ -28,8 +28,9 @@ export default function AdminRoutes() {
         <Route path="orders" element={<OrdersPage />} />
         <Route path="customers" element={<CustomersPage />} />
         <Route path="inventory" element={<InventoryPage />} />
-        <Route path="coupons" element={<CouponsPage />} />
+        <Route path="coupons" element={<CouponsPage />} /> 
         <Route index element={<Navigate to="dashboard" replace />} />
+      
       </Route>
     </Routes>
   );

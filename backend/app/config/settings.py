@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     EMAIL_PASSWORD: str
     UPLOAD_DIR: str = "uploads"
 
+    VAPID_PUBLIC_KEY: str
+    VAPID_PRIVATE_KEY: str
+    VAPID_EMAIL: str
 
     class Config:
         env_file = ".env"

@@ -148,17 +148,20 @@ def decode_token(token: str) -> Dict[str, Any]:
 
 def get_current_user_id(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
-) -> str:
+) -> int:
     payload = decode_access_token(credentials.credentials)
 
     if payload.get("type") != "access":
         raise HTTPException(status_code=401, detail="Invalid token type.")
 
-    user_id: str = payload.get("user_id", "")
-    if not user_id:
+    user_id = payload.get("user_id")
+    if user_id is None:
         raise HTTPException(status_code=401, detail="Token missing user_id.")
 
-    return user_id
+    try:
+        return int(user_id)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=401, detail="Invalid user_id in token.")
 
 
 def get_current_role(

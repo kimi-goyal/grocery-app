@@ -1,18 +1,12 @@
-from importlib.resources import files
-
-from fastapi import FastAPI
 import os
+from importlib.resources import files
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.lifespan import lifespan
 from fastapi.staticfiles import StaticFiles
 from app.config.settings import settings
 from app.routers.auth_router import router as auth_router
-# #from app.routers.product_router import router as product_router
-# from app.routers.admin_router import router as admin_router
-# from app.routers.category_router import router as category_router
 from app.routers.cart_router import router as cart_router
-# from app.routers.order_router import router as order_router
-# from app.routers.user_router import router as user_router
 from app.routers import (
     admin_product_router,
     admin_order_router,
@@ -22,9 +16,10 @@ from app.routers import (
     address_router, payment_router, order_router
 )
 
-
-import app.core.firebase_admin
-from app.routers import payment_router  # Initialize Firebase Admin SDK
+from app.routers.coupon_router import admin_router as coupon_admin_router
+from app.routers.coupon_router import user_router as coupon_user_router
+from app.routers.coupon_router import push_router
+from app.routers import payment_router 
 
 app = FastAPI(
     title="QuickBite Backend",
@@ -63,6 +58,22 @@ app.include_router(admin_coupon_router.router)
 app.include_router(payment_router.router)
 app.include_router(address_router.router)
 app.include_router(order_router.router)
+app.include_router(coupon_admin_router)
+app.include_router(coupon_user_router)
+app.include_router(push_router)
+
+# Add this to your existing main.py on_startup:
+
+@app.on_event("startup")
+def on_startup():
+    create_tables()
+    init_firebase()
+
+    # Start background scheduler for expiry push notifications
+    from app.scheduler import start_scheduler
+    start_scheduler()
+
+    print("✅ FreshCart API started")
 
 @app.get("/")
 def health():

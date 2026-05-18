@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.dependencies.auth_dependencies import get_db
 from app.core.dependencies import require_admin
 from app.models.user_model import User
-from app.schemas.coupon import CouponCreate, CouponUpdate, CouponOut, CouponValidate, CouponValidateResponse
+from app.schemas.coupon import CouponCreate, CouponUpdate, CouponOut, CouponValidateRequest, CouponValidateResponse
 from app.services import coupon_service
 
 router = APIRouter(prefix="/api/v1/admin", tags=["Admin — Coupons"])
@@ -46,5 +46,5 @@ def delete_coupon(coupon_id: str, db: Session = Depends(get_db), _: User = Depen
 
 # Public endpoint — used by checkout to validate coupons
 @router.post("/coupons/validate", response_model=CouponValidateResponse, tags=["Public"])
-def validate_coupon(data: CouponValidate, db: Session = Depends(get_db)):
+def validate_coupon(data: CouponValidateRequest, db: Session = Depends(get_db)):
     return coupon_service.validate_coupon(db, data.code, data.order_amount)

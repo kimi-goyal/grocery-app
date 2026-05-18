@@ -7,6 +7,7 @@ import CheckoutPage from "../pages/checkout/CheckoutPage";
 import ProfilePage from "../pages/profile/ProfilePage";
 import ProtectedRoute from "../components/common/ProtectedRoute";
 import PublicRoute from "../components/common/PublicRoute";
+import CouponsPage from "../pages/CouponPage";
 
 
 export default function AppRoutes() {
@@ -57,8 +58,8 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
-
+     
+      <Route path="/coupons" element={<ProtectedRoute><CouponsPage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" />} />
 
     </Routes>
