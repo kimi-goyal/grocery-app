@@ -1,4 +1,4 @@
-import { privateApi, publicApi } from './api';
+import { privateApi } from './api';
 import type { Address, CouponResult } from '../types/checkout.types';
 
 export const checkoutService = {
@@ -17,7 +17,7 @@ export const checkoutService = {
 
   // Coupon validation (only on step 1)
   validateCoupon: (code: string, order_amount: number): Promise<CouponResult> =>
-    publicApi.post('/api/v1/admin/coupons/validate', { code, order_amount }).then(r => r.data),
+    privateApi.post('/coupons/validate', { code, order_amount }).then(r => r.data),
 
   // Place order
   placeOrder: (payload: {

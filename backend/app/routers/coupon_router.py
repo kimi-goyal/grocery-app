@@ -25,7 +25,15 @@ def list_coupons(db: Session = Depends(get_db), _: User = Depends(require_admin)
 
 @admin_router.post("", response_model=CouponOut, status_code=201)
 def create_coupon(data: CouponCreate, db: Session = Depends(get_db), _: User = Depends(require_admin)):
-    return coupon_service.create_coupon(db, data)
+    try:
+        import sys
+        print(f"DEBUG: Received coupon data: {data}", file=sys.stderr)
+        print(f"DEBUG: Expiry type: {type(data.expiry)}, value: {data.expiry}", file=sys.stderr)
+        return coupon_service.create_coupon(db, data)
+    except Exception as e:
+        import sys
+        print(f"DEBUG: Error creating coupon: {e}", file=sys.stderr)
+        raise
 
 
 @admin_router.put("/{coupon_id}", response_model=CouponOut)

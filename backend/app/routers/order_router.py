@@ -69,11 +69,11 @@ from typing import Optional
 import razorpay
 from sqlalchemy import delete
 from app.dependencies.auth_dependencies import get_db
-from app.dependencies.auth_dependencies import get_current_user
+from app.core.dependencies import get_current_user
 from app.models.user_model import User
 from app.models.order import Order, OrderItem, OrderStatus
 from app.models.address import Address
-from app.services.coupon_service import validate_coupon
+from app.services.coupon_service import validate_coupon, record_usage
 from app.models.cart import CartItem
 
 from app.config.settings import settings
@@ -131,7 +131,7 @@ def place_order(
     user: User = Depends(get_current_user),
 ):
     # Validate address belongs to user
-    addr = db.query(Address).filter(Address.id == data.address_id, Address.user_id == user["user_id"]).first()
+    addr = db.query(Address).filter(Address.id == data.address_id, Address.user_id == user.id).first()
     if not addr:
         raise HTTPException(404, "Address not found.")
 
@@ -157,7 +157,7 @@ def place_order(
 
     cart_items = (
         db.query(CartItem)
-        .filter(CartItem.user_id == user["user_id"])
+        .filter(CartItem.user_id == user.id)
         .all()
     )
 
@@ -170,21 +170,16 @@ def place_order(
     discount = 0.0
 
     if data.coupon_code:
-        result = validate_coupon(db, data.coupon_code, subtotal)
-        if result["valid"]:
-            discount = result["discount_amount"]
-            # Increment used_count
-            from app.models.coupon import Coupon
-            c = db.query(Coupon).filter(Coupon.code == data.coupon_code.upper()).first()
-            if c:
-                c.used_count += 1
-                db.flush()
+        result = validate_coupon(db, data.coupon_code, subtotal, user.id)
+        if not result["valid"]:
+            raise HTTPException(400, result["message"])
+        discount = result["discount_amount"]
 
     total = subtotal + delivery - discount
 
     # Create order
     # ✅ Fetch full user from DB
-    db_user = db.query(User).filter(User.id == user["user_id"]).first()
+    db_user = db.query(User).filter(User.id == user.id).first()
     if not db_user:
         raise HTTPException(404, "User not found")
 
@@ -193,7 +188,7 @@ def place_order(
 
     order = Order(
         order_number=order_number,
-        user_id=user["user_id"],
+        user_id=user.id,
         customer_name=db_user.name,
         email=db_user.email,
         phone=addr.phone,
@@ -220,8 +215,10 @@ def place_order(
         ))
 
     # Clear cart
-   
-    db.execute(delete(CartItem).where(CartItem.user_id == user["user_id"]))
+    db.execute(delete(CartItem).where(CartItem.user_id == user.id))
     db.commit()
+
+    if data.coupon_code and discount > 0 and result.get("coupon"):
+        record_usage(db, result["coupon"]["id"], user.id, order.id)
 
     return {"order_number": order_number, "total": total, "status": "Pending"}

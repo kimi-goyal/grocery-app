@@ -90,6 +90,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { MOCK_ADMIN } from '../data/mockData';
+import { tokenManager } from '../../lib/tokenManager';
+import { privateApi } from '../../services/api';
  
 interface AdminUser { email: string; name: string; role: string; }
 interface AdminAuthState {
@@ -110,7 +112,7 @@ export const useAdminAuthStore = create<AdminAuthState>()(
       login: async (email, password) => {
         set({ loading: true, error: null });
         try {
-          const response = await fetch('/api/v1/auth/admin-login', {
+          const response = await fetch('http://localhost:8000/api/v1/auth/admin-login', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -120,12 +122,11 @@ export const useAdminAuthStore = create<AdminAuthState>()(
           });
           if (response.ok) {
             const data = await response.json();
-            // Get user info from /auth/me
-            const meResponse = await fetch('/api/v1/auth/me', {
-              credentials: 'include',
-            });
-            if (meResponse.ok) {
-              const meData = await meResponse.json();
+            tokenManager.setTokens(data.access_token, data.refresh_token);
+
+            const meResponse = await privateApi.get('/auth/me');
+            if (meResponse.status === 200) {
+              const meData = meResponse.data;
               set({ admin: { email: meData.email, name: meData.name, role: meData.role }, isAdminAuthenticated: true, initialized: true, loading: false });
             } else {
               set({ admin: { email, name: 'Admin User', role: 'admin' }, isAdminAuthenticated: true, initialized: true, loading: false });
@@ -143,23 +144,26 @@ export const useAdminAuthStore = create<AdminAuthState>()(
       },
       logout: async () => {
         try {
-          await fetch('/api/v1/auth/logout', {
+          await fetch('http://localhost:8000/api/v1/auth/logout', {
             method: 'POST',
             credentials: 'include',
           });
         } catch (error) {
           console.error('Logout error:', error);
         }
+        tokenManager.clearTokens();
         set({ admin: null, isAdminAuthenticated: false, initialized: true });
       },
       initAuth: async () => {
         set({ isAdminAuthenticated: false, initialized: false });
         try {
-          const response = await fetch('/api/v1/auth/me', {
-            credentials: 'include',
-          });
-          if (response.ok) {
-            const data = await response.json();
+          if (!tokenManager.isAccessValid()) {
+            set({ admin: null, isAdminAuthenticated: false, initialized: true });
+            return;
+          }
+          const response = await privateApi.get('/auth/me');
+          if (response.status === 200) {
+            const data = response.data;
             if (data.role === 'admin') {
               set({ admin: { email: data.email, name: data.name, role: data.role }, isAdminAuthenticated: true, initialized: true });
             } else {

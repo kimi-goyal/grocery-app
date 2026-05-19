@@ -334,10 +334,10 @@ export default function ProductsPage() {
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {categories.map(cat => (
-                <button
+                <div
                   key={cat.id}
                   onClick={() => setSelectedCat(cat)}
-                  className="bg-[rgba(17,25,40,0.75)] border border-white/8 rounded-2xl p-4 flex flex-col gap-3 hover:border-[#FF4D8D]/30 hover:-translate-y-0.5 transition-all text-left group"
+                  className="bg-[rgba(17,25,40,0.75)] border border-white/8 rounded-2xl p-4 flex flex-col gap-3 hover:border-[#FF4D8D]/30 hover:-translate-y-0.5 transition-all text-left group cursor-pointer"
                 >
                   <div className="h-32 rounded-xl overflow-hidden bg-white/3">
                     <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
@@ -346,7 +346,8 @@ export default function ProductsPage() {
                     <div className="text-white font-semibold text-sm" style={{ fontFamily: 'Sora,sans-serif' }}>{cat.name}</div>
                     <div className="text-[#94A3B8] text-xs mt-0.5">{cat.subcategories.length} subcategories · {cat.productCount} products</div>
                   </div>
-                  <div className="text-[#FF4D8D] text-xs flex items-center gap-1">Manage <ChevronRight size={12} />
+                  <div className="flex items-center justify-between">
+                    <div className="text-[#FF4D8D] text-xs flex items-center gap-1">Manage <ChevronRight size={12} /></div>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -354,7 +355,7 @@ export default function ProductsPage() {
                           deleteCategory(cat.id);
                         }
                       }}
-                      className="absolute top-3 right-3 p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 opacity-0 group-hover:opacity-100 transition"
+                      className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 opacity-0 group-hover:opacity-100 transition"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -368,7 +369,7 @@ export default function ProductsPage() {
                   >
                     <StatusBadge status={cat.isActive ? "Active" : "Inactive"} />
                   </div>
-                </button>
+                </div>
 
               ))}
             </div>
