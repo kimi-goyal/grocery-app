@@ -86,7 +86,7 @@ export default function CategorySlider({ onViewAll, onSelect }: Props) {
           >
             {/* ✅ Image instead of icon */}
             <div className="w-[90px] h-[90px] rounded-2xl overflow-hidden border border-white/10 bg-white/5 group-hover:border-white/25 group-hover:scale-105 transition-all">
-              <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+              <img src={cat.image || undefined} alt={cat.name} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
              
             </div>
 

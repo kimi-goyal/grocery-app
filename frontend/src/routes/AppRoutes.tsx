@@ -1,4 +1,4 @@
-
+ 
 import { Routes, Route, Navigate } from "react-router-dom";
 import WelcomePage from "../pages/entry/WelcomePage";
 import AuthLayout from "../layouts/AuthLayout";
@@ -8,12 +8,13 @@ import ProfilePage from "../pages/profile/ProfilePage";
 import ProtectedRoute from "../components/common/ProtectedRoute";
 import PublicRoute from "../components/common/PublicRoute";
 import CouponsPage from "../pages/CouponPage";
-
-
+import OrdersPage from "../pages/orders/OrderPage";
+ 
+ 
 export default function AppRoutes() {
   return (
     <Routes>
-
+ 
       <Route
         path="/"
         element={
@@ -22,7 +23,7 @@ export default function AppRoutes() {
           </PublicRoute>
         }
       />
-
+ 
       <Route
         path="/auth"
         element={
@@ -31,7 +32,7 @@ export default function AppRoutes() {
           </PublicRoute>
         }
       />
-
+ 
       <Route
         path="/home"
         element={
@@ -40,7 +41,7 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
+ 
       <Route
         path="/checkout"
         element={
@@ -49,7 +50,7 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
+ 
       <Route
         path="/profile"
         element={
@@ -58,10 +59,11 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
-     
-      <Route path="/coupons" element={<ProtectedRoute><CouponsPage /></ProtectedRoute>} />
+     <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
+      <Route path="/offers" element={<ProtectedRoute><CouponsPage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" />} />
-
+ 
     </Routes>
   );
 }
+ 

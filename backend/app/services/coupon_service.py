@@ -88,6 +88,7 @@ def assign_users(db: Session, coupon_id: str, user_ids: list[int]) -> int:
 
 
 def get_all_coupons(db: Session) -> list[Coupon]:
+    cleanup_expired_coupons(db)
     coupons = db.query(Coupon).order_by(Coupon.created_at.desc()).all()
     for c in coupons:
         c.assigned_count = db.query(func.count(CouponAssignment.id)).filter(
@@ -100,6 +101,7 @@ def get_all_coupons(db: Session) -> list[Coupon]:
 
 def get_user_coupons(db: Session, user_id: int) -> list[dict]:
     """Returns all coupons visible and valid for this user."""
+    cleanup_expired_coupons(db)
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(404, "User not found.")
@@ -254,6 +256,18 @@ def record_usage(db: Session, coupon_id: str, user_id: int, order_id: str) -> No
     if c:
         c.used_count = (c.used_count or 0) + 1
     db.commit()
+
+
+def cleanup_expired_coupons(db: Session) -> int:
+    """Deletes coupons whose expiry timestamp is now in the past."""
+    now = datetime.now(timezone.utc)
+    expired_coupons = db.query(Coupon).filter(Coupon.expiry <= now).all()
+    count = len(expired_coupons)
+    if count:
+        for coupon in expired_coupons:
+            db.delete(coupon)
+        db.commit()
+    return count
 
 
 # ── Expiry warning scheduler ──────────────────────────────────────────────────

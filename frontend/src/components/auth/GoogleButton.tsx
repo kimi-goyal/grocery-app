@@ -3,22 +3,22 @@ import { auth, googleProvider } from "../../lib/firebase";
 import { useAuthStore } from "../../store/authStore";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+ 
 interface Props {
   label?: string;
 }
-
+ 
 export default function GoogleButton({ label = "Continue with Google" }: Props) {
   const [googleLoading, setGoogleLoading] = useState(false);
   const { googleLogin, error } = useAuthStore();
   const navigate = useNavigate();
-
+ 
   const handleClick = async () => {
     setGoogleLoading(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      const idToken = await result.user.getIdToken();
-
+      const idToken = await result.user.getIdToken(true);
+    
       await googleLogin(idToken);
       navigate("/home");
     } catch (err: any) {
@@ -27,7 +27,7 @@ export default function GoogleButton({ label = "Continue with Google" }: Props) 
       setGoogleLoading(false);
     }
   };
-
+ 
   return (
     <div className="w-full flex flex-col gap-2">
       <button
@@ -47,7 +47,7 @@ export default function GoogleButton({ label = "Continue with Google" }: Props) 
       >
         {/* shimmer */}
         <div className="absolute inset-0 bg-white/5 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12 pointer-events-none" />
-
+ 
         {googleLoading ? (
           <>
             <svg
@@ -84,7 +84,7 @@ export default function GoogleButton({ label = "Continue with Google" }: Props) 
           </>
         )}
       </button>
-
+ 
       {/* error */}
       {(error?.toLowerCase().includes("google") ||
         error?.toLowerCase().includes("popup") ||
@@ -96,3 +96,4 @@ export default function GoogleButton({ label = "Continue with Google" }: Props) 
     </div>
   );
 }
+ 

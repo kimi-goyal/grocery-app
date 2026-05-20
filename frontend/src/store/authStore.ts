@@ -6,9 +6,9 @@ import type {
   LoginPayload,
   MeResponse,
 } from "../services/authService";
-
+ 
 export type AuthStep = "idle" | "pending_otp";
-
+ 
 interface AuthState {
   user: MeResponse | null;
   isAuthenticated: boolean;
@@ -19,7 +19,7 @@ interface AuthState {
   pendingEmail: string | null;
   authStep: AuthStep;
   otpSuccess: boolean;
-
+ 
   // Actions
   register: (data: RegisterPayload) => Promise<void>;
   login: (data: LoginPayload) => Promise<void>;
@@ -29,13 +29,13 @@ interface AuthState {
   skipAsGuest: () => void;
   initAuth: () => Promise<void>;
   googleLogin: (idToken: string) => Promise<void>;
-
+ 
   // Error helpers
   clearError: () => void;
   setFieldError: (field: string, msg: string) => void;
   clearFieldErrors: () => void;
 }
-
+ 
 export const useAuthStore = create<AuthState>()(
   subscribeWithSelector(
     persist(
@@ -49,7 +49,7 @@ export const useAuthStore = create<AuthState>()(
         pendingEmail: null,
         authStep: "idle",
         otpSuccess: false,
-
+ 
         // ─── Register ────────────────────────────────────────────────────────
         register: async (data) => {
           set({ loading: true, error: null, fieldErrors: {} });
@@ -66,7 +66,7 @@ export const useAuthStore = create<AuthState>()(
             const detail = err?.response?.data?.detail;
             let errorMsg = "Registration failed. Please try again.";
             const fieldErrs: Record<string, string> = {};
-
+ 
             if (status === 400) {
               if (typeof detail === "string") {
                 if (detail.toLowerCase().includes("email"))
@@ -94,7 +94,7 @@ export const useAuthStore = create<AuthState>()(
             } else if (status === 0 || !err?.response) {
               errorMsg = "Cannot reach server. Check your connection.";
             }
-
+ 
             set({
               loading: false,
               error: errorMsg || null,
@@ -103,7 +103,7 @@ export const useAuthStore = create<AuthState>()(
             throw err;
           }
         },
-
+ 
         // ─── Login ───────────────────────────────────────────────────────────
         login: async (data) => {
           set({ loading: true, error: null, fieldErrors: {} });
@@ -123,7 +123,7 @@ export const useAuthStore = create<AuthState>()(
             const status = err?.response?.status;
             const detail = err?.response?.data?.detail;
             let errorMsg = "Login failed. Please try again.";
-
+ 
             if (status === 401) {
               errorMsg = "Incorrect email/username or password.";
             } else if (status === 403) {
@@ -146,12 +146,12 @@ export const useAuthStore = create<AuthState>()(
             } else if (typeof detail === "string") {
               errorMsg = detail;
             }
-
+ 
             set({ loading: false, error: errorMsg });
             throw err;
           }
         },
-
+ 
         // ─── Verify OTP ──────────────────────────────────────────────────────
         verifyOtp: async (email, otp) => {
           set({ loading: true, error: null });
@@ -169,17 +169,17 @@ export const useAuthStore = create<AuthState>()(
             const status = err?.response?.status;
             const detail = err?.response?.data?.detail;
             let msg = "Invalid or expired OTP. Please try again.";
-
+ 
             if (status === 400) msg = typeof detail === "string" ? detail : msg;
             else if (status === 404) msg = "User not found.";
             else if (!err?.response)
               msg = "Network error. Check your connection.";
-
+ 
             set({ loading: false, error: msg });
             throw err;
           }
         },
-
+ 
         // ─── Resend OTP ──────────────────────────────────────────────────────
         resendOtp: async (email) => {
           set({ loading: true, error: null });
@@ -190,16 +190,16 @@ export const useAuthStore = create<AuthState>()(
             const status = err?.response?.status;
             const detail = err?.response?.data?.detail;
             let msg = "Failed to resend OTP.";
-
+ 
             if (status === 400) msg = typeof detail === "string" ? detail : msg;
             else if (status === 404) msg = "Email not found.";
             else if (!err?.response) msg = "Network error.";
-
+ 
             set({ loading: false, error: msg });
             throw err;
           }
         },
-
+ 
         // ─── Init (app start) ────────────────────────────────────────────────
         // Called on app mount to validate stored token and hydrate user
         initAuth: async () => {
@@ -210,7 +210,7 @@ export const useAuthStore = create<AuthState>()(
             set({ user: null, isAuthenticated: false });
           }
         },
-
+ 
         // ─── Logout ──────────────────────────────────────────────────────────
         logout: async () => {
           try {
@@ -228,17 +228,17 @@ export const useAuthStore = create<AuthState>()(
             fieldErrors: {},
           });
         },
-
+ 
         skipAsGuest: () => set({ isGuest: true, isAuthenticated: false }),
-
+ 
         // ─── Google Login ───────────────────────────────────────────────────
         googleLogin: async (idToken: string) => {
           set({ loading: true, error: null });
-
+ 
           try {
             await authService.googleLogin(idToken);
             const me = await authService.getMe();
-
+ 
             set({
               user: me,
               isAuthenticated: true,
@@ -249,7 +249,7 @@ export const useAuthStore = create<AuthState>()(
             set({ loading: false, error: "Google login/signup failed" });
           }
         },
-
+ 
         // ─── Error helpers ───────────────────────────────────────────────────
         clearError: () => set({ error: null }),
         setFieldError: (field, msg) =>
@@ -269,8 +269,10 @@ export const useAuthStore = create<AuthState>()(
     ),
   ),
 );
-
+ 
 // Listen for forced logout event emitted by axios response interceptor
 window.addEventListener("auth:logout", () => {
   useAuthStore.getState().logout();
 });
+ 
+ 

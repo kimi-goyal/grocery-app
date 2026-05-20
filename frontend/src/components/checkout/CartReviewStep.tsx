@@ -38,7 +38,7 @@ export default function CartReviewStep() {
           >
             <div className="w-16 h-16 rounded-xl overflow-hidden bg-white/5 border border-white/8 shrink-0">
               <img
-                src={item.image}
+                src={item.image || undefined}
                 alt={item.name}
                 className="w-full h-full object-cover"
                 onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -79,21 +79,31 @@ export default function CartReviewStep() {
         ))}
       </div>
 
-      <button
-        onClick={() => setStep(2)}
-        disabled={items.length === 0}
-        className="w-full py-3.5 rounded-2xl font-bold text-sm text-white transition-all disabled:opacity-40 flex items-center justify-center gap-2"
-        style={{
-          background: 'linear-gradient(135deg,#ff4d6d,#e63c5a)',
-          fontFamily: 'Sora,sans-serif',
-          boxShadow: '0 8px 24px rgba(255,77,109,0.3)',
-        }}
-      >
-        Continue to Address
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <path d="M5 12h14M12 5l7 7-7 7"/>
-        </svg>
-      </button>
+      <div className="flex gap-3">
+        <button
+          onClick={() => navigate('/home')}
+          className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-[#ff4d6d] transition-all border border-[#ff4d6d]/25 bg-[#ff4d6d]/8 hover:bg-[#ff4d6d]/15 flex items-center justify-center gap-2"
+          style={{ fontFamily: 'Sora,sans-serif' }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
+          Continue Shopping
+        </button>
+        <button
+          onClick={() => setStep(2)}
+          disabled={items.length === 0}
+          className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          style={{
+            background: 'linear-gradient(135deg,#ff4d6d,#e63c5a)',
+            fontFamily: 'Sora,sans-serif',
+            boxShadow: items.length > 0 ? '0 8px 24px rgba(255,77,109,0.3)' : 'none',
+          }}
+        >
+          Continue to Address
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
     </div>
   );
 }

@@ -521,11 +521,20 @@ export default function PaymentStep() {
  
     return (
         <div className="space-y-4 animate-fadeUp">
-            <div>
-                <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'Sora,sans-serif' }}>Payment</h2>
-                <p className="text-gray-500 text-xs mt-0.5">Choose your preferred payment method</p>
+            <div className="flex flex-col gap-3">
+                <button
+                    onClick={() => setStep(2)}
+                    className="self-start text-xs font-semibold text-[#ff4d6d] bg-[#ff4d6d]/10 border border-[#ff4d6d]/20 px-3 py-1.5 rounded-lg hover:bg-[#ff4d6d]/20 transition-colors"
+                    style={{ fontFamily: 'Sora,sans-serif' }}
+                >
+                    ← Back to Address
+                </button>
+                <div>
+                    <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'Sora,sans-serif' }}>Payment</h2>
+                    <p className="text-gray-500 text-xs mt-0.5">Choose your preferred payment method</p>
+                </div>
             </div>
- 
+
             {/* Address summary */}
             {selectedAddr && (
                 <div className="flex items-center justify-between p-3.5 rounded-2xl border border-white/7 bg-white/3">

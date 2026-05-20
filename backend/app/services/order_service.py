@@ -1,94 +1,12 @@
-# from fastapi import HTTPException
-# from sqlalchemy.orm import Session
-
-# from app.models.order_model import Order
-# from app.models.order_item_model import OrderItem
-# from app.repositories.order_repository import (
-#     create_order,
-#     get_order_by_id,
-#     get_user_orders,
-# )
-# from app.repositories.cart_repository import get_user_cart
-# from app.repositories.product_repository import get_product_by_id
-
-
-# def create_order_from_cart_service(db: Session, user_id: int):
-#     cart = get_user_cart(db, user_id)
-#     if not cart or not cart.items:
-#         raise HTTPException(400, "Cart is empty")
-
-#     total = 0
-#     order_items = []
-
-#     for item in cart.items:
-#         product = get_product_by_id(db, item.product_id)
-
-#         if not product or product.stock < item.quantity:
-#             raise HTTPException(
-#                 400,
-#                 f"Product {item.product_id} out of stock"
-#             )
-
-#         total += product.price * item.quantity
-
-#         order_items.append(
-#             OrderItem(
-#                 product_id=product.id,
-#                 quantity=item.quantity,
-#                 price=product.price,
-#             )
-#         )
-
-#         # 🔥 reduce stock
-#         product.stock -= item.quantity
-
-#     order = Order(
-#         user_id=user_id,
-#         total_amount=total,
-#         items=order_items,
-#     )
-
-#     order = create_order(db, order)
-
-#     # ✅ clear cart
-#     for item in cart.items:
-#         db.delete(item)
-
-#     db.commit()
-#     db.refresh(order)
-#     return order
-
-
-# def get_orders_service(db: Session, user_id: int):
-#     return get_user_orders(db, user_id)
-
-
-# def get_order_detail_service(db: Session, user_id: int, order_id: int):
-#     order = get_order_by_id(db, order_id)
-
-#     if not order or order.user_id != user_id:
-#         raise HTTPException(404, "Order not found")
-
-#     return order
-
-
-# def order_tracking_service(db: Session, user_id: int, order_id: int):
-#     order = get_order_detail_service(db, user_id, order_id)
-
-#     return {
-#         "order_id": order.id,
-#         "status": order.status,
-#     }
-
-
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, cast, Date
 from fastapi import HTTPException
 from datetime import datetime, timezone, timedelta
 from app.models.order import Order, OrderItem, OrderStatus
-from app.schemas.order import OrderStatusUpdate
-
-
+from app.schemas.order import OrderStatusUpdate,RatingSubmit
+ 
+ 
+ 
 def get_orders(
     db: Session,
     status: str = None,
@@ -97,20 +15,20 @@ def get_orders(
     limit: int = 50,
 ) -> dict:
     q = db.query(Order).options(joinedload(Order.items))
-
+ 
     if status and status != "All":
         try:
             q = q.filter(Order.status == OrderStatus(status))
         except ValueError:
             pass
-
+ 
     if search:
         q = q.filter(
             Order.customer_name.ilike(f"%{search}%") |
             Order.order_number.ilike(f"%{search}%") |
             Order.email.ilike(f"%{search}%")
         )
-
+ 
     q = q.order_by(Order.created_at.desc())
     total = q.count()
     orders = q.offset((page - 1) * limit).limit(limit).all()
@@ -120,8 +38,8 @@ def get_orders(
         "page": page,
         "pages": (total + limit - 1) // limit,
     }
-
-
+ 
+ 
 def get_order(db: Session, order_id: str) -> Order:
     order = (
         db.query(Order)
@@ -132,11 +50,11 @@ def get_order(db: Session, order_id: str) -> Order:
     if not order:
         raise HTTPException(status_code=404, detail="Order not found.")
     return order
-
-
+ 
+ 
 def update_order_status(db: Session, order_id: str, data: OrderStatusUpdate) -> Order:
     order = get_order(db, order_id)
-
+ 
     # Validate status transition
     forbidden = {
         OrderStatus.delivered: [OrderStatus.pending, OrderStatus.packed],
@@ -148,18 +66,18 @@ def update_order_status(db: Session, order_id: str, data: OrderStatusUpdate) -> 
             status_code=400,
             detail=f"Cannot change status from '{order.status.value}' to '{data.status.value}'."
         )
-
+ 
     order.status = data.status
     db.commit()
     db.refresh(order)
     return order
-
-
+ 
+ 
 def get_sales_by_period(db: Session, period: str = "week") -> list[dict]:
     """Returns daily revenue for the last N days."""
     days = {"week": 7, "month": 30, "year": 365}.get(period, 7)
     since = datetime.now(timezone.utc) - timedelta(days=days)
-
+ 
     rows = (
         db.query(
             cast(Order.created_at, Date).label("day"),
@@ -173,8 +91,176 @@ def get_sales_by_period(db: Session, period: str = "week") -> list[dict]:
         .order_by(cast(Order.created_at, Date))
         .all()
     )
-
+ 
     return [
         {"day": row.day.strftime("%a"), "revenue": round(float(row.revenue), 2)}
         for row in rows
     ]
+ 
+ 
+# ── User: fetch own orders ────────────────────────────────────────────────────
+ 
+def get_user_orders(
+    db: Session,
+    user_id: str,
+    status: str = None,
+    page: int = 1,
+    limit: int = 10,
+) -> dict:
+    q = (
+        db.query(Order)
+        .options(joinedload(Order.items))
+        .filter(Order.user_id == user_id)
+    )
+    if status and status != "All":
+        try:
+            q = q.filter(Order.status == OrderStatus(status))
+        except ValueError:
+            pass
+ 
+    q = q.order_by(Order.created_at.desc())
+    total = q.count()
+    orders = q.offset((page - 1) * limit).limit(limit).all()
+ 
+    result = []
+    for o in orders:
+        result.append({
+            "id": o.id,
+            "order_number": o.order_number,
+            "total_amount": o.total_amount,
+            "status": o.status,
+            "items_count": len(o.items),
+            "payment_method": o.payment_method,
+            "is_rated": o.is_rated,
+            "overall_rating": o.overall_rating,
+            "created_at": o.created_at,
+            "items_preview": o.items[:2], # thumbnail row
+        })
+ 
+    return {
+        "orders": result,
+        "total": total,
+        "page": page,
+        "pages": (total + limit - 1) // limit,
+    }
+ 
+ 
+def get_user_order_detail(db: Session, order_id: str, user_id: str) -> Order:
+    order = (
+        db.query(Order)
+        .options(joinedload(Order.items))
+        .filter(Order.id == order_id, Order.user_id == user_id)
+        .first()
+    )
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found.")
+    return order
+ 
+ 
+# ── Rating ────────────────────────────────────────────────────────────────────
+ 
+def submit_rating(
+    db: Session,
+    order_id: str,
+    user_id: str,
+    data: RatingSubmit,
+) -> Order:
+    order = get_user_order_detail(db, order_id, user_id)
+ 
+    if order.status != OrderStatus.delivered:
+        raise HTTPException(400, "You can only rate delivered orders.")
+    if order.is_rated:
+        raise HTTPException(400, "You have already rated this order.")
+ 
+    order.is_rated = True
+    order.overall_rating = data.overall_rating
+    order.delivery_rating = data.delivery_rating
+    order.quality_rating = data.quality_rating
+    order.packaging_rating = data.packaging_rating
+    order.review_text = data.review_text
+    order.rated_at = datetime.now(timezone.utc)
+ 
+    # Per-item ratings
+    if data.item_ratings:
+        for item in order.items:
+            if item.id in data.item_ratings:
+                item.item_rating = data.item_ratings[item.id]
+ 
+    db.commit()
+    db.refresh(order)
+    return order
+ 
+ 
+# ── Admin: orders ─────────────────────────────────────────────────────────────
+ 
+def get_orders(
+    db: Session,
+    status: str = None,
+    search: str = None,
+    page: int = 1,
+    limit: int = 50,
+) -> dict:
+    q = db.query(Order).options(joinedload(Order.items))
+    if status and status != "All":
+        try:
+            q = q.filter(Order.status == OrderStatus(status))
+        except ValueError:
+            pass
+    if search:
+        q = q.filter(
+            Order.customer_name.ilike(f"%{search}%") |
+            Order.order_number.ilike(f"%{search}%") |
+            Order.email.ilike(f"%{search}%")
+        )
+    q = q.order_by(Order.created_at.desc())
+    total = q.count()
+    orders = q.offset((page - 1) * limit).limit(limit).all()
+    return {"orders": orders, "total": total, "page": page, "pages": (total + limit - 1) // limit}
+ 
+ 
+def get_order(db: Session, order_id: str) -> Order:
+    order = (
+        db.query(Order)
+        .options(joinedload(Order.items))
+        .filter(Order.id == order_id)
+        .first()
+    )
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found.")
+    return order
+ 
+ 
+def update_order_status(db: Session, order_id: str, data: OrderStatusUpdate) -> Order:
+    order = get_order(db, order_id)
+    forbidden = {
+        OrderStatus.delivered: [OrderStatus.pending, OrderStatus.packed],
+        OrderStatus.cancelled: [OrderStatus.delivered],
+    }
+    blocked = forbidden.get(data.status, [])
+    if order.status in blocked:
+        raise HTTPException(
+            400,
+            f"Cannot change from '{order.status.value}' to '{data.status.value}'."
+        )
+    order.status = data.status
+    db.commit()
+    db.refresh(order)
+    return order
+ 
+ 
+def get_sales_by_period(db: Session, period: str = "week") -> list[dict]:
+    from datetime import timedelta
+    days = {"week": 7, "month": 30, "year": 365}.get(period, 7)
+    since = datetime.now(timezone.utc) - timedelta(days=days)
+    rows = (
+        db.query(
+            cast(Order.created_at, Date).label("day"),
+            func.sum(Order.total_amount).label("revenue"),
+        )
+        .filter(Order.created_at >= since, Order.status != OrderStatus.cancelled)
+        .group_by(cast(Order.created_at, Date))
+        .order_by(cast(Order.created_at, Date))
+        .all()
+    )
+    return [{"day": r.day.strftime("%a"), "revenue": round(float(r.revenue), 2)} for r in rows]
+ 

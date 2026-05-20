@@ -31,3 +31,4 @@ def require_verified(user: User = Depends(get_current_user)) -> User:
     if not user.is_verified:
         raise HTTPException(status_code=403, detail="Email not verified.")
     return user
+

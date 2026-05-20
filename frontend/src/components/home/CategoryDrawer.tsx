@@ -176,7 +176,7 @@ export default function CategoryDrawer({ open, onClose }: Props) {
                 {/* <span><img src={cat.image} alt={cat.name} className="w-6 h-6 object-contain" /></span> */}
 
                 <div className="w-14 h-14 rounded-xl overflow-hidden border border-white/10 bg-white/5 shrink-0">
-                  <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
+                  <img src={cat.image || undefined} alt={cat.name} className="w-full h-full object-cover" />
                 </div>
 
 

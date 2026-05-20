@@ -160,20 +160,30 @@ export default function AddressStep() {
         </div>
       )}
 
-      {/* Continue */}
-      <button
-        onClick={handleContinue}
-        disabled={!selectedAddressId}
-        className="w-full py-3.5 rounded-2xl font-bold text-sm text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        style={{
-          background: 'linear-gradient(135deg,#ff4d6d,#e63c5a)',
-          fontFamily: 'Sora,sans-serif',
-          boxShadow: selectedAddressId ? '0 8px 24px rgba(255,77,109,0.3)' : 'none',
-        }}
-      >
-        Continue to Payment
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </button>
+      {/* Continue & Back */}
+      <div className="flex gap-3">
+        <button
+          onClick={() => setStep(1)}
+          className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-[#ff4d6d] transition-all border border-[#ff4d6d]/25 bg-[#ff4d6d]/8 hover:bg-[#ff4d6d]/15 flex items-center justify-center gap-2"
+          style={{ fontFamily: 'Sora,sans-serif' }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Back to Cart
+        </button>
+        <button
+          onClick={handleContinue}
+          disabled={!selectedAddressId}
+          className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          style={{
+            background: 'linear-gradient(135deg,#ff4d6d,#e63c5a)',
+            fontFamily: 'Sora,sans-serif',
+            boxShadow: selectedAddressId ? '0 8px 24px rgba(255,77,109,0.3)' : 'none',
+          }}
+        >
+          Continue to Payment
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
     </div>
   );
 }

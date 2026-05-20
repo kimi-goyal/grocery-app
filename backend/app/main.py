@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from app.lifespan import lifespan
 from fastapi.staticfiles import StaticFiles
 from app.config.settings import settings
-from app.config.database import Base, engine
+from app.config.database import Base, engine, SessionLocal
 from app.routers.auth_router import router as auth_router
 from app.routers.cart_router import router as cart_router
 from app.routers import (
@@ -22,6 +22,9 @@ from app.routers.coupon_router import admin_router as coupon_admin_router
 from app.routers.coupon_router import user_router as coupon_user_router
 from app.routers.coupon_router import push_router
 from app.routers import payment_router 
+from app.services.coupon_service import cleanup_expired_coupons
+from app.routers.user_order_router import router as user_order_router
+import app.core.firebase_admin  # noqa: F401
 
 app = FastAPI(
     title="QuickBite Backend",
@@ -69,6 +72,7 @@ app.include_router(order_router.router)
 app.include_router(coupon_admin_router)
 app.include_router(coupon_user_router)
 app.include_router(push_router)
+app.include_router(user_order_router)
 
 # Add this to your existing main.py on_startup:
 
@@ -76,14 +80,19 @@ def create_tables():
     Base.metadata.create_all(bind=engine)
 
 
-def init_firebase():
-    import app.core.firebase_admin  # noqa: F401
+# def init_firebase():
+#     import app.core.firebase_admin  # noqa: F401
 
 
 @app.on_event("startup")
 def on_startup():
     create_tables()
-    init_firebase()
+    # init_firebase()
+    db = SessionLocal()
+    try:
+        cleanup_expired_coupons(db)
+    finally:
+        db.close()
 
     # Start background scheduler for expiry push notifications
     from app.scheduler import start_scheduler

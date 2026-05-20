@@ -91,7 +91,7 @@
 // }
 
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useCheckoutStore } from '../../store/checkoutStore';
 import { useCartStore } from '../../store/cartStore';
 import { useAuthStore } from '../../store/authStore';
@@ -103,10 +103,32 @@ import OrderConfirmed from '../../components/checkout/OrderConfirmed';
 import OrderSummaryPanel from '../../components/checkout/OrderSummaryPanel';
 
 export default function CheckoutPage() {
-  const { step, reset, orderNumber } = useCheckoutStore();
+  const { step, reset, orderNumber, setCouponCode, setCouponResult } = useCheckoutStore();
   const { items, fetchCart } = useCartStore();
   const { isAuthenticated, isGuest } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Handle coupon code from navigation state (from CouponPage)
+  useEffect(() => {
+    const state = location.state as { couponCode?: string } | null;
+    if (state?.couponCode) {
+      setCouponCode(state.couponCode);
+      // Auto-validate the coupon
+      (async () => {
+        try {
+          const { checkoutService } = await import('../../services/checkoutService');
+          const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
+          const res = await checkoutService.validateCoupon(state.couponCode!, subtotal);
+          setCouponResult(res);
+        } catch {
+          setCouponResult({ valid: false, discount_amount: 0, message: 'Failed to validate coupon.' });
+        }
+      })();
+      // Clear the state so it doesn't re-apply on browser back
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, items.length]);
 
   // Sync cart from backend on mount
   useEffect(() => {

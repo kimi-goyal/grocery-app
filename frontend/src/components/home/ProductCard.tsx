@@ -24,9 +24,16 @@ export default function ProductCard({ product }: { product: Product }) {
   const { items, addItem, updateQty } = useCartStore();
 
   // ✅ MATCH USING product_id (important)
- const cartItem = items.find(
-  i => i.product_id === product.id 
-);
+  const cartItem = items.find(
+    (i) => i.product_id === product.id
+  );
+
+  const packLabel = (() => {
+    const unit = product.unit?.trim() ?? '';
+    if (!unit) return `${product.pack_size || 1} pcs`;
+    if (/^[0-9]/.test(unit)) return unit;
+    return `${product.pack_size || 1} ${unit}`;
+  })();
 
   return (
     <div className="glass border border-white/8 rounded-2xl p-4 flex flex-col gap-3 hover:border-white/18 transition-all hover:-translate-y-0.5 group relative">
@@ -40,9 +47,9 @@ export default function ProductCard({ product }: { product: Product }) {
 
       {/* Image */}
       <div className="h-[140px] rounded-xl overflow-hidden bg-white/3 flex items-center justify-center">
-        {!imgErr ? (
+          {!imgErr ? (
           <img
-            src={product.image}
+            src={product.image || undefined}
             alt={product.name}
             className="w-full h-full object-cover"
             onError={() => setImgErr(true)}
@@ -59,7 +66,7 @@ export default function ProductCard({ product }: { product: Product }) {
         </h4>
 
         <p className="text-gray-500 text-xs mt-0.5">
-          {product.pack_size} {product.unit}
+          {packLabel}
         </p>
 
         <div className="flex items-center gap-1 mt-1">
