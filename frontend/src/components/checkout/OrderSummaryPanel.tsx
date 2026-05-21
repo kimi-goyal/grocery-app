@@ -19,6 +19,7 @@ export default function OrderSummaryPanel({ showCoupon }: Props) {
   const [showCouponList, setShowCouponList] = useState(false);
   const [coupons, setCoupons] = useState<UserCoupon[]>([]);
   const [loadingCoupons, setLoadingCoupons] = useState(false);
+  const [defaultApplied, setDefaultApplied] = useState(false);
 
   const subtotal = totalPrice();
   const delivery = subtotal >= 299 ? 0 : 20;
@@ -26,10 +27,10 @@ export default function OrderSummaryPanel({ showCoupon }: Props) {
   const total = subtotal + delivery - discount;
 
   useEffect(() => {
-    if (showCoupon && showCouponList && coupons.length === 0) {
+    if (showCoupon && coupons.length === 0) {
       fetchCoupons();
     }
-  }, [showCoupon, showCouponList]);
+  }, [showCoupon]);
 
   const fetchCoupons = async () => {
     setLoadingCoupons(true);
@@ -37,6 +38,14 @@ export default function OrderSummaryPanel({ showCoupon }: Props) {
       const { couponService } = await import('../../services/couponService');
       const userCoupons = await couponService.getMyCoupons();
       setCoupons(userCoupons);
+
+      if (!couponCode && !couponResult?.valid && !defaultApplied) {
+        const defaultCoupon = userCoupons.find(coupon => coupon.code === 'FIRST20' && isEligible(coupon));
+        if (defaultCoupon) {
+          await handleSelectCoupon(defaultCoupon);
+          setDefaultApplied(true);
+        }
+      }
     } catch (error) {
       console.error('Failed to fetch coupons:', error);
     } finally {

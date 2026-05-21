@@ -121,9 +121,11 @@
 // }
 
  
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import { orderService } from '../../services/orderService';
+import { couponService } from '../../services/couponService';
  
 const MENU = [
   {
@@ -230,9 +232,41 @@ const MENU = [
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuthStore();
+  const [ordersCount, setOrdersCount] = useState(0);
+  const [couponsCount, setCouponsCount] = useState(0);
+  const [reviewsCount, setReviewsCount] = useState(0);
+  const [statsLoading, setStatsLoading] = useState(true);
  
   useEffect(() => {
-    if (!isAuthenticated) navigate('/auth', { replace: true });
+    if (!isAuthenticated) {
+      navigate('/auth', { replace: true });
+      return;
+    }
+
+    let active = true;
+    const loadCounts = async () => {
+      setStatsLoading(true);
+      try {
+        const [ordersRes, coupons] = await Promise.all([
+          orderService.getMyOrders({ page: 1, limit: 100 }),
+          couponService.getMyCoupons(),
+        ]);
+
+        if (!active) return;
+        setOrdersCount(ordersRes.total ?? ordersRes.orders.length);
+        setCouponsCount(coupons.length);
+        setReviewsCount(ordersRes.orders.filter((order) => order.is_rated).length);
+      } catch (err) {
+        console.error('Unable to load profile stats', err);
+      } finally {
+        if (active) setStatsLoading(false);
+      }
+    };
+
+    loadCounts();
+    return () => {
+      active = false;
+    };
   }, [isAuthenticated, navigate]);
  
   if (!user) {
@@ -337,9 +371,21 @@ export default function ProfilePage() {
           {/* Quick stats */}
           <div className="grid grid-cols-3 gap-2 mt-5">
             {[
-              { label: 'Orders', value: '0', path: '/orders' },
-              { label: 'Coupons', value: '0', path: '/offers' },
-              { label: 'Reviews', value: '0', path: '/orders' },
+              {
+                label: 'Orders',
+                value: statsLoading ? '...' : ordersCount.toString(),
+                path: '/orders',
+              },
+              {
+                label: 'Coupons',
+                value: statsLoading ? '...' : couponsCount.toString(),
+                path: '/offers',
+              },
+              {
+                label: 'Reviews',
+                value: statsLoading ? '...' : reviewsCount.toString(),
+                path: '/orders',
+              },
             ].map(s => (
               <button
                 key={s.label}

@@ -27,6 +27,7 @@ export interface MeResponse {
   is_verified: boolean;
   phone?: string;
   avatar?: string;
+  created_at?: string;
 }
 
 export const authService = {
@@ -46,6 +47,13 @@ export const authService = {
 
   getMe: (): Promise<MeResponse> =>
     privateApi.get("/auth/me").then((r) => r.data),
+
+  updateMe: (data: {
+    name?: string;
+    email?: string;
+    phone?: string;
+  }): Promise<MeResponse> =>
+    privateApi.put("/auth/me", data).then((r) => r.data),
 
   refresh: () =>
     publicApi.post<AuthTokens>("/auth/refresh").then((r) => r.data),

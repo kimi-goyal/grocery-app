@@ -29,7 +29,7 @@ interface AuthState {
   skipAsGuest: () => void;
   initAuth: () => Promise<void>;
   googleLogin: (idToken: string) => Promise<void>;
- 
+  updateMe: (data: { name?: string; email?: string; phone?: string }) => Promise<void>;
   // Error helpers
   clearError: () => void;
   setFieldError: (field: string, msg: string) => void;
@@ -227,6 +227,34 @@ export const useAuthStore = create<AuthState>()(
             error: null,
             fieldErrors: {},
           });
+        },
+
+        updateMe: async (data) => {
+          set({ loading: true, error: null, fieldErrors: {} });
+          try {
+            const updated = await authService.updateMe(data);
+            set({ user: updated, loading: false });
+          } catch (err: any) {
+            const status = err?.response?.status;
+            const detail = err?.response?.data?.detail;
+            let errorMsg = "Update failed. Please try again.";
+
+            if (status === 400) {
+              if (typeof detail === "string") errorMsg = detail;
+              else if (Array.isArray(detail)) {
+                detail.forEach((d: any) => {
+                  const field = d.loc?.[d.loc.length - 1];
+                  if (field) set((s) => ({ fieldErrors: { ...s.fieldErrors, [field]: d.msg } }));
+                });
+                errorMsg = "Please review the highlighted fields.";
+              }
+            } else if (!err?.response) {
+              errorMsg = "Cannot reach server. Check your connection.";
+            }
+
+            set({ loading: false, error: errorMsg });
+            throw err;
+          }
         },
  
         skipAsGuest: () => set({ isGuest: true, isAuthenticated: false }),

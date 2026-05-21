@@ -258,6 +258,33 @@ def record_usage(db: Session, coupon_id: str, user_id: int, order_id: str) -> No
     db.commit()
 
 
+def ensure_default_new_user_coupon(db: Session) -> Coupon:
+    """Create the default FIRST20 new-user coupon if it does not already exist."""
+    code = 'FIRST20'
+    existing = db.query(Coupon).filter(func.upper(Coupon.code) == code).first()
+    if existing:
+        return existing
+
+    expiry = datetime.now(timezone.utc) + timedelta(days=365)
+    default_coupon = CouponCreate(
+        code=code,
+        title='20% OFF on your first order',
+        description='Use this code on your first order for a one-time 20% discount.',
+        discount=20.0,
+        type=DiscountType.percentage,
+        min_order=0.0,
+        max_discount=0.0,
+        usage_limit=0,
+        expiry=expiry,
+        active=True,
+        target_type=CouponTargetType.new_user,
+        push_notify=False,
+        notify_before_expiry_hours=24,
+        image_url=None,
+    )
+    return create_coupon(db, default_coupon)
+
+
 def cleanup_expired_coupons(db: Session) -> int:
     """Deletes coupons whose expiry timestamp is now in the past."""
     now = datetime.now(timezone.utc)

@@ -22,7 +22,7 @@ from app.routers.coupon_router import admin_router as coupon_admin_router
 from app.routers.coupon_router import user_router as coupon_user_router
 from app.routers.coupon_router import push_router
 from app.routers import payment_router 
-from app.services.coupon_service import cleanup_expired_coupons
+from app.services.coupon_service import cleanup_expired_coupons, ensure_default_new_user_coupon
 from app.routers.user_order_router import router as user_order_router
 import app.core.firebase_admin  # noqa: F401
 
@@ -91,6 +91,7 @@ def on_startup():
     db = SessionLocal()
     try:
         cleanup_expired_coupons(db)
+        ensure_default_new_user_coupon(db)
     finally:
         db.close()
 

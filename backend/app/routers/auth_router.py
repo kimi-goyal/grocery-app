@@ -1,13 +1,13 @@
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Request, Response, HTTPException, status
 from sqlalchemy.orm import Session
 import logging
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 from app.dependencies.auth_dependencies import get_db, get_current_user
-from app.repositories.user_repository import get_user_by_id
+from app.repositories.user_repository import get_user_by_email, get_user_by_id
 from app.services.auth_service import google_login_service, register_user, login_user, admin_login_user, verify_otp, resend_otp_service
 from app.schemas.auth_schema import (
     UserRegister,
@@ -16,10 +16,10 @@ from app.schemas.auth_schema import (
     RefreshRequest,
     OTPVerifyRequest,
 )
+from app.schemas.user_schema import UserResponse
 from app.middleware.limiter import limiter
 from app.config.security import decode_refresh_token, create_access_token, create_refresh_token
 from app.config.settings import settings
-from fastapi import status
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +160,7 @@ def refresh(
     }
 
 
-@router.get("/me")
+@router.get("/me", response_model=UserResponse)
 def get_current_user_info(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -168,17 +168,46 @@ def get_current_user_info(
     """Protected endpoint that requires a valid access token"""
     user = get_user_by_id(db, current_user["user_id"])
     if not user:
-        from fastapi import HTTPException, status
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    return {
-        "id": user.id,
-        "name": user.name,
-        "email": user.email,
-        "username": user.username,
-        "role": user.role,
-        "is_verified": user.is_verified,
-    }
+    return user
+
+class UpdateMePayload(BaseModel):
+    name: str | None = None
+    email: EmailStr | None = None
+    phone: str | None = None
+
+@router.put("/me", response_model=UserResponse)
+def update_current_user_info(
+    payload: UpdateMePayload,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    user = get_user_by_id(db, current_user["user_id"])
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    old_email = user.email
+
+    if payload.name is not None:
+        user.name = payload.name.strip()
+
+    if payload.phone is not None:
+        user.phone = payload.phone.strip() or None
+
+    if payload.email is not None:
+        new_email = payload.email.strip().lower()
+        if new_email != old_email:
+            existing = get_user_by_email(db, new_email)
+            if existing and existing.id != user.id:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already in use")
+            if user.username == old_email:
+                user.username = new_email
+            user.email = new_email
+
+    db.commit()
+    db.refresh(user)
+    return user
 
 
 @router.get("/admin")

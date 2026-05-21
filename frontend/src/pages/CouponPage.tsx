@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCouponStore } from '../store/couponStore';
+import CartDrawer from '../components/home/CartDrawer';
 import CouponCard from '../components/coupons/CouponCard';
 import NotificationPermissionBanner from '../components/coupons/NotificationPermissionBanner';
 import Navbar from '../components/navbar/Navbar';
@@ -44,7 +45,7 @@ export default function CouponsPage() {
       <div className="max-w-4xl mx-auto px-5 py-8 space-y-6 relative z-10">
 
         {/* Header */}
-        <div className="animate-fadeUp">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fadeUp">
           <div className="flex items-center gap-3 mb-1">
             <div className="w-10 h-10 rounded-2xl bg-[#ff4d6d]/12 border border-[#ff4d6d]/20 flex items-center justify-center text-xl">
               🎁
@@ -56,6 +57,17 @@ export default function CouponsPage() {
               <p className="text-gray-500 text-xs">{coupons.filter(c => !c.is_used).length} active offers waiting for you</p>
             </div>
           </div>
+          <button
+            onClick={() => navigate('/home')}
+            className="px-4 py-2 rounded-2xl text-sm font-semibold text-white transition-all"
+            style={{
+              background: 'linear-gradient(135deg,#ff4d6d,#e63c5a)',
+              fontFamily: 'Sora,sans-serif',
+              boxShadow: '0 6px 20px rgba(255,77,109,0.3)',
+            }}
+          >
+            Back to Home
+          </button>
         </div>
 
         {/* Notification banner */}
@@ -157,6 +169,8 @@ export default function CouponsPage() {
           </div>
         )}
       </div>
+
+      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
 
       <style>{`
         @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }

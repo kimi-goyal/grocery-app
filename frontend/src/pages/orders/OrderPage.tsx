@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOrderStore } from '../../store/orderStore';
 import Navbar from '../../components/navbar/Navbar';
+import CartDrawer from '../../components/home/CartDrawer';
 import OrderCard from '../../components/orders/OrderCard';
 import OrderDetailDrawer from '../../components/orders/OrderDetailDrawer';
 import RatingModal from '../../components/orders/RatingModal';
@@ -44,7 +45,7 @@ export default function OrdersPage() {
       <div className="max-w-3xl mx-auto px-5 py-8 space-y-6 relative z-10">
  
         {/* Page header */}
-        <div className="flex items-center justify-between animate-fadeUp">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fadeUp">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-[#ff4d6d]/12 border border-[#ff4d6d]/20 flex items-center justify-center text-xl">
               🛒
@@ -56,23 +57,35 @@ export default function OrdersPage() {
               <p className="text-gray-500 text-xs">{total} total orders</p>
             </div>
           </div>
-          {pendingRatings > 0 && (
-            <div
-              className="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer hover:scale-105 transition-transform"
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/home')}
+              className="px-4 py-2 rounded-2xl text-sm font-semibold text-white transition-all"
               style={{
-                background: 'rgba(255,77,109,0.1)',
-                border: '1px solid rgba(255,77,109,0.25)',
+                background: 'linear-gradient(135deg,#ff4d6d,#e63c5a)',
+                fontFamily: 'Sora,sans-serif',
+                boxShadow: '0 6px 20px rgba(255,77,109,0.3)',
               }}
-              onClick={() => setFilter('Delivered')}
             >
-              <span className="text-sm">⭐</span>
-              <span className="text-[#ff4d6d] text-xs font-bold" style={{ fontFamily: 'Sora,sans-serif' }}>
-                {pendingRatings} to rate
-              </span>
-            </div>
-          )}
+              Back to Home
+            </button>
+            {pendingRatings > 0 ? (
+              <button
+                onClick={() => setFilter('Delivered')}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-white transition-transform"
+                style={{
+                  background: 'rgba(255,77,109,0.1)',
+                  border: '1px solid rgba(255,77,109,0.25)',
+                  fontFamily: 'Sora,sans-serif',
+                }}
+              >
+                <span className="text-sm">⭐</span>
+                <span className="text-[#ff4d6d]">{pendingRatings} to rate</span>
+              </button>
+            ) : null}
+          </div>
         </div>
- 
+
         {/* Filter tabs */}
         <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 animate-fadeUp">
           {FILTERS.map(f => (
@@ -181,6 +194,8 @@ export default function OrdersPage() {
           onDone={() => { setRatingId(null); setRatingOrder(null); }}
         />
       )}
+ 
+      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
  
       <style>{`
         @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
