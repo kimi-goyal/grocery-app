@@ -91,7 +91,7 @@
 // }
 
 import { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useCheckoutStore } from '../../store/checkoutStore';
 import { useCartStore } from '../../store/cartStore';
 import { useAuthStore } from '../../store/authStore';
@@ -103,7 +103,7 @@ import OrderConfirmed from '../../components/checkout/OrderConfirmed';
 import OrderSummaryPanel from '../../components/checkout/OrderSummaryPanel';
 
 export default function CheckoutPage() {
-  const { step, reset, orderNumber, setCouponCode, setCouponResult } = useCheckoutStore();
+  const { step, setStep, orderNumber, setCouponCode, setCouponResult } = useCheckoutStore();
   const { items, fetchCart } = useCartStore();
   const { isAuthenticated, isGuest } = useAuthStore();
   const navigate = useNavigate();
@@ -136,12 +136,25 @@ export default function CheckoutPage() {
     return () => { /* don't reset on unmount — user might navigate back */ };
   }, []);
 
+  const [searchParams] = useSearchParams();
+
+  // Set active checkout step from query string
+  useEffect(() => {
+    const target = searchParams.get('step');
+    if (target === '2' || target === '3') {
+      const stepIndex = Number(target) as 2 | 3;
+      if (step !== stepIndex) {
+        setStep(stepIndex);
+      }
+    }
+  }, [searchParams, step, setStep]);
+
   // Redirect guests to login
   useEffect(() => {
     if (!isAuthenticated && !isGuest) {
       navigate('/auth', { replace: true });
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isGuest, navigate]);
 
   // Redirect if cart is empty and not on confirmed step
   useEffect(() => {
@@ -150,7 +163,7 @@ export default function CheckoutPage() {
     if (items.length === 0 && step < 4 && !orderNumber) {
       navigate('/home');
     }
-  }, [items, step, orderNumber]);
+  }, [items, step, orderNumber, navigate]);
 
   const isConfirmed = step === 4;
 

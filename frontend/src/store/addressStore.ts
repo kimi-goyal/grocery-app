@@ -5,17 +5,20 @@ import type { Address, AddressCreate } from '../types/checkout.types';
 
 interface AddressState {
     addresses: Address[];
+    selectedAddressId: number | null;
     loading: boolean;
     fetchAddresses: () => Promise<void>;
     addAddress: (data: AddressCreate) => Promise<Address>;
     deleteAddress: (id: number) => Promise<void>;
     setDefault: (id: number) => Promise<void>;
+    setSelectedAddress: (id: number) => void;
 }
 
 export const useAddressStore = create<AddressState>()(
     persist(
         (set) => ({
             addresses: [],
+            selectedAddressId: null,
             loading: false,
 
             fetchAddresses: async () => {
@@ -23,7 +26,13 @@ export const useAddressStore = create<AddressState>()(
                 try {
                     // GET /api/v1/addresses
                     const res = await privateApi.get('/addresses');
-                    set({ addresses: res.data, loading: false });
+                    const addresses = res.data;
+                    set({ addresses, loading: false });
+                    // Auto-select default or first address
+                    const defaultAddr = addresses.find((a: Address) => a.is_default);
+                    if (defaultAddr && !defaultAddr.id) {
+                        set({ selectedAddressId: defaultAddr.id });
+                    }
                 } catch {
                     set({ loading: false });
                 }
@@ -38,7 +47,14 @@ export const useAddressStore = create<AddressState>()(
             deleteAddress: async (id) => {
                 // DELETE /api/v1/addresses/:id
                 await privateApi.delete(`/addresses/${id}`);
-                set(s => ({ addresses: s.addresses.filter(a => a.id !== id) }));
+                set(s => {
+                    const filtered = s.addresses.filter(a => a.id !== id);
+                    // If deleted address was selected, select another
+                    const newSelectedId = s.selectedAddressId === id 
+                        ? (filtered.find(a => a.is_default) || filtered[0])?.id || null
+                        : s.selectedAddressId;
+                    return { addresses: filtered, selectedAddressId: newSelectedId };
+                });
             },
 
             setDefault: async (id) => {
@@ -46,12 +62,17 @@ export const useAddressStore = create<AddressState>()(
                 await privateApi.patch(`/addresses/${id}/default`);
                 set(s => ({
                     addresses: s.addresses.map(a => ({ ...a, is_default: a.id === id })),
+                    selectedAddressId: id,
                 }));
+            },
+
+            setSelectedAddress: (id) => {
+                set({ selectedAddressId: id });
             },
         }),
         {
             name: 'freshcart-addresses',
-            partialize: (s) => ({ addresses: s.addresses }),
+            partialize: (s) => ({ addresses: s.addresses, selectedAddressId: s.selectedAddressId }),
         }
     )
 );

@@ -143,7 +143,7 @@ const MENU = [
   },
   {
     label: 'My Coupons',
-    path: '/coupons',
+    path: '/offers',
     icon: (
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
@@ -156,7 +156,7 @@ const MENU = [
   },
   {
     label: 'Addresses',
-    path: '/orders',
+    path: '/addresses',
     icon: (
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
@@ -170,7 +170,7 @@ const MENU = [
   },
   {
     label: 'Payment Methods',
-    path: '/orders',
+    path: '/payment-methods',
     icon: (
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <rect x="1" y="4" width="22" height="16" rx="2" />
@@ -184,7 +184,7 @@ const MENU = [
   },
   {
     label: 'Notifications',
-    path: '/orders',
+    path: '/notifications',
     icon: (
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -198,7 +198,7 @@ const MENU = [
   },
   {
     label: 'Help & Support',
-    path: '/orders',
+    path: '/help',
     icon: (
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <circle cx="12" cy="12" r="10" />
@@ -213,7 +213,7 @@ const MENU = [
   },
   {
     label: 'Settings',
-    path: '/orders',
+    path: '/settings',
     icon: (
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <circle cx="12" cy="12" r="3" />
@@ -338,7 +338,7 @@ export default function ProfilePage() {
           <div className="grid grid-cols-3 gap-2 mt-5">
             {[
               { label: 'Orders', value: '0', path: '/orders' },
-              { label: 'Coupons', value: '0', path: '/coupons' },
+              { label: 'Coupons', value: '0', path: '/offers' },
               { label: 'Reviews', value: '0', path: '/orders' },
             ].map(s => (
               <button
