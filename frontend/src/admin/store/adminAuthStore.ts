@@ -92,6 +92,7 @@ import { persist } from 'zustand/middleware';
 import { MOCK_ADMIN } from '../data/mockData';
 import { adminTokenManager } from '../../lib/adminTokenManager';
 import { adminApi } from '../../services/adminApi';
+import { tokenManager } from '../../lib/tokenManager';
  
 interface AdminUser { email: string; name: string; role: string; }
 interface AdminAuthState {
@@ -122,6 +123,8 @@ export const useAdminAuthStore = create<AdminAuthState>()(
           });
           if (response.ok) {
             const data = await response.json();
+            // remove any shared user tokens to avoid using user creds for user/private API
+            tokenManager.clearTokens();
             adminTokenManager.setTokens(data.access_token, data.refresh_token);
 
             const meResponse = await adminApi.get('/auth/me');

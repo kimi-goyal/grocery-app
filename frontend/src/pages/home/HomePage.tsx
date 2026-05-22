@@ -39,6 +39,15 @@ export default function HomePage() {
     fetchData();
   }, []);
 
+  // Open category drawer when navigated with ?category=Name
+  useEffect(() => {
+    const cat = searchParams.get('category');
+    if (cat) {
+      setSelected(cat);
+      setCategoryDrawerOpen(true);
+    }
+  }, [searchParams, setSelected]);
+
   // ✅ flatten all products
   const allProducts = categories.flatMap(c => c.products);
 
@@ -56,6 +65,15 @@ export default function HomePage() {
 
   const handleSidebarSelect = (key: string) => {
     setActiveSidebar(key);
+    if (key === 'offers') {
+      navigate('/offers');
+      return;
+    }
+    if (key === 'flash') {
+      const defaultCategory = categories[0]?.name || '';
+      handleCategorySelect(defaultCategory);
+      return;
+    }
     if (key !== 'home' && key !== 'categories') {
       handleCategorySelect(key);
     } else if (key === 'categories') {

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, subscribeWithSelector } from "zustand/middleware";
 import { authService } from "../services/authService";
+import { adminTokenManager } from '../lib/adminTokenManager';
 import type {
   RegisterPayload,
   LoginPayload,
@@ -110,6 +111,8 @@ export const useAuthStore = create<AuthState>()(
           try {
             await authService.login(data); // backend sets auth cookies
             const me = await authService.getMe();
+            // clear any admin tokens to avoid admin creds being used for user APIs
+            adminTokenManager.clearTokens();
             set({
               loading: false,
               isAuthenticated: true,
@@ -267,6 +270,9 @@ export const useAuthStore = create<AuthState>()(
             await authService.googleLogin(idToken);
             const me = await authService.getMe();
  
+            // clear any admin tokens
+            adminTokenManager.clearTokens();
+
             set({
               user: me,
               isAuthenticated: true,

@@ -63,9 +63,12 @@
 
 import { useNavigate } from "react-router-dom";
 import bgImage from "../../assets/bgimage.png";
+import { useShopStore } from "../../store/shopStore";
 
 export default function HeroBanner() {
   const navigate = useNavigate();
+  const categories = useShopStore((s) => s.categories);
+  const firstCategory = categories?.[0]?.name || "";
 
   return (
     <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-[#081c14]">
@@ -105,7 +108,15 @@ export default function HeroBanner() {
               Shop Now
             </button>
 
-            <button className="btn-social px-5 py-2.5 text-sm border border-white/15">
+            <button
+              onClick={() => {
+                if (firstCategory) {
+                  navigate(`/home?category=${encodeURIComponent(firstCategory)}`);
+                } else {
+                  navigate('/home');
+                }
+              }}
+              className="btn-social px-5 py-2.5 text-sm border border-white/15">
               Explore Deals
             </button>
           </div>

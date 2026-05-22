@@ -247,15 +247,33 @@ export default function ProfilePage() {
     const loadCounts = async () => {
       setStatsLoading(true);
       try {
-        const [ordersRes, coupons] = await Promise.all([
-          orderService.getMyOrders({ page: 1, limit: 100 }),
+        const [firstPage, coupons] = await Promise.all([
+          orderService.getMyOrders({ page: 1, limit: 50 }),
           couponService.getMyCoupons(),
         ]);
 
         if (!active) return;
-        setOrdersCount(ordersRes.total ?? ordersRes.orders.length);
+
+        const ordersTotal = firstPage.total ?? firstPage.orders.length;
+        let ratedCount = firstPage.orders.filter((order) => order.is_rated).length;
+
+        if (firstPage.pages > 1) {
+          const pagesToFetch = [];
+          for (let page = 2; page <= firstPage.pages; page += 1) {
+            pagesToFetch.push(orderService.getMyOrders({ page, limit: 50 }));
+          }
+
+          const remainingPages = await Promise.all(pagesToFetch);
+          if (!active) return;
+
+          ratedCount += remainingPages.reduce((sum, pageResult) => (
+            sum + pageResult.orders.filter((order) => order.is_rated).length
+          ), 0);
+        }
+
+        setOrdersCount(ordersTotal);
         setCouponsCount(coupons.length);
-        setReviewsCount(ordersRes.orders.filter((order) => order.is_rated).length);
+        setReviewsCount(ratedCount);
       } catch (err) {
         console.error('Unable to load profile stats', err);
       } finally {
@@ -318,22 +336,13 @@ export default function ProfilePage() {
  
           <div className="flex items-center gap-4 relative">
             {/* Avatar */}
-            <div
-              className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center shrink-0"
-              style={{
-                background: 'linear-gradient(135deg, rgba(255,77,109,0.2), rgba(168,85,247,0.2))',
-                border: '2px solid rgba(255,77,109,0.25)',
-              }}
-            >
-              {user.avatar ? (
-                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-2xl font-black text-[#ff4d6d]">
-                  {user.name?.[0]?.toUpperCase() || 'U'}
-                </span>
-              )}
+            <div className="w-14 h-14 rounded-full overflow-hidden border border-white/20 bg-[#ff4d6d]/10 text-[#ff4d6d] flex items-center justify-center">
+              <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="7" r="4" />
+                <path d="M3 21c0-4 4-7 8-7s8 3 8 7" />
+              </svg>
             </div>
- 
+
             {/* Info */}
             <div className="flex-1 min-w-0">
               <p className="text-white font-bold text-base truncate" style={{ fontFamily: 'Sora,sans-serif' }}>

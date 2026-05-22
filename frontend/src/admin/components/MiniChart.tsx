@@ -1,14 +1,15 @@
 
 import { MOCK_SALES_DATA } from '../data/mockData';
 
-export default function MiniChart() {
-  const max = Math.max(...MOCK_SALES_DATA.map(d => d.revenue));
-  const min = Math.min(...MOCK_SALES_DATA.map(d => d.revenue));
-  const range = max - min;
+export default function MiniChart({ data }: { data?: { day: string; revenue: number }[] }) {
+  const D = data && data.length ? data : MOCK_SALES_DATA;
+  const max = Math.max(...D.map(d => d.revenue));
+  const min = Math.min(...D.map(d => d.revenue));
+  const range = max - min || 1;
   const H = 80;
   const W = 100;
-  const pts = MOCK_SALES_DATA.map((d, i) => {
-    const x = (i / (MOCK_SALES_DATA.length - 1)) * W;
+  const pts = D.map((d, i) => {
+    const x = (i / (D.length - 1 || 1)) * W;
     const y = H - ((d.revenue - min) / range) * H;
     return `${x},${y}`;
   }).join(' ');
@@ -34,14 +35,14 @@ export default function MiniChart() {
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-        {MOCK_SALES_DATA.map((d, i) => {
-          const x = (i / (MOCK_SALES_DATA.length - 1)) * W;
+        {D.map((d, i) => {
+          const x = (i / (D.length - 1 || 1)) * W;
           const y = H - ((d.revenue - min) / range) * H;
           return <circle key={i} cx={x} cy={y} r="1.5" fill="#FF4D8D" />;
         })}
       </svg>
       <div className="flex justify-between mt-1">
-        {MOCK_SALES_DATA.map(d => (
+        {D.map(d => (
           <span key={d.day} className="text-[10px] text-[#94A3B8]">{d.day}</span>
         ))}
       </div>
