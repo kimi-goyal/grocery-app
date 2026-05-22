@@ -16,9 +16,14 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponMessage, setCouponMessage] = useState<string | null>(null);
 
+  const firstOrderCoupon = useMemo(
+    () => userCoupons.find((coupon) => coupon.code === 'FIRST20' && !coupon.is_used && subtotal >= coupon.min_order),
+    [userCoupons, subtotal],
+  );
+
   const applicableCoupons = useMemo(() =>
     userCoupons
-      .filter((coupon) => !coupon.is_used && subtotal >= coupon.min_order)
+      .filter((coupon) => coupon.code !== 'FIRST20' && !coupon.is_used && subtotal >= coupon.min_order)
       .sort((a, b) => {
         if (a.discount !== b.discount) return b.discount - a.discount;
         return (a.hours_left ?? Number.MAX_SAFE_INTEGER) - (b.hours_left ?? Number.MAX_SAFE_INTEGER);
@@ -74,6 +79,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
   };
 
   const activeCouponApplied = couponResult?.valid;
+  const availableOfferCount = (firstOrderCoupon ? 1 : 0) + applicableCoupons.length;
 
   return (
     <>
@@ -134,39 +140,67 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
               <div className="text-xs text-gray-400 flex items-center justify-between">
                 <span>Available offers</span>
                 <span className="text-[10px] text-gray-500">
-                  {loadingCoupons ? 'Loading...' : `${applicableCoupons.length} coupon${applicableCoupons.length === 1 ? '' : 's'} available`}
+                  {loadingCoupons ? 'Loading...' : `${availableOfferCount} coupon${availableOfferCount === 1 ? '' : 's'} available`}
                 </span>
               </div>
 
               <div className="flex flex-col gap-2">
                 {loadingCoupons ? (
                   <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-gray-400">Checking offers...</div>
-                ) : applicableCoupons.length > 0 ? (
-                  applicableCoupons.map((coupon) => (
-                    <div key={coupon.id} className="bg-white/5 border border-white/10 rounded-lg px-3 py-3 text-xs">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="font-semibold text-white truncate" style={{ fontFamily: 'Sora,sans-serif' }}>
-                            {coupon.code} · {coupon.type === 'percentage' ? `${coupon.discount}% OFF` : `₹${coupon.discount} OFF`}
-                          </div>
-                          <p className="text-gray-400 text-[11px] mt-1">
-                            Min order ₹{coupon.min_order}{coupon.max_discount > 0 && coupon.type === 'percentage' ? ` · max ₹${coupon.max_discount}` : ''}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => applyCoupon(coupon.code)}
-                          disabled={couponLoading}
-                          className="text-[#ff4d6d] font-bold text-xs rounded-full px-3 py-1 bg-white/5 hover:bg-white/10 transition-colors"
-                        >
-                          Apply
-                        </button>
-                      </div>
-                    </div>
-                  ))
                 ) : (
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-gray-400">
-                    No coupons available for this cart yet.
-                  </div>
+                  <>
+                    {firstOrderCoupon && (
+                      <div className="rounded-2xl border border-[#ff4d6d]/20 bg-[#1a1620] p-3 text-xs text-white">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-white" style={{ fontFamily: 'Sora,sans-serif' }}>
+                              Flat 20% OFF on your first order
+                            </p>
+                            <p className="text-gray-400 text-[11px] mt-1">
+                              USE CODE: <span className="text-[#ff4d6d] font-bold">FIRST20</span>
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => applyCoupon(firstOrderCoupon.code)}
+                            disabled={couponLoading}
+                            className="text-[#ff4d6d] font-bold text-xs rounded-full px-3 py-1 bg-white/5 hover:bg-white/10 transition-colors"
+                          >
+                            Apply
+                          </button>
+                        </div>
+                        <p className="text-gray-500 text-[10px] mt-2">
+                          Available for your first order only. If you're eligible, it will appear here automatically.
+                        </p>
+                      </div>
+                    )}
+                    {applicableCoupons.length > 0 ? (
+                      applicableCoupons.map((coupon) => (
+                        <div key={coupon.id} className="bg-white/5 border border-white/10 rounded-lg px-3 py-3 text-xs">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="font-semibold text-white truncate" style={{ fontFamily: 'Sora,sans-serif' }}>
+                                {coupon.code} · {coupon.type === 'percentage' ? `${coupon.discount}% OFF` : `₹${coupon.discount} OFF`}
+                              </div>
+                              <p className="text-gray-400 text-[11px] mt-1">
+                                Min order ₹{coupon.min_order}{coupon.max_discount > 0 && coupon.type === 'percentage' ? ` · max ₹${coupon.max_discount}` : ''}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => applyCoupon(coupon.code)}
+                              disabled={couponLoading}
+                              className="text-[#ff4d6d] font-bold text-xs rounded-full px-3 py-1 bg-white/5 hover:bg-white/10 transition-colors"
+                            >
+                              Apply
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-gray-400">
+                        No coupons available for this cart yet.
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>

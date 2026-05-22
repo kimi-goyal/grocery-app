@@ -25,6 +25,7 @@ export default function CouponsPage() {
   });
 
   const expiringCount = coupons.filter(c => !c.is_used && c.hours_left !== null).length;
+  const firstOrderCoupon = coupons.find(c => c.code === 'FIRST20' && !c.is_used);
 
   const handleApply = (code: string) => navigate('/checkout', { state: { couponCode: code } });
 
@@ -72,6 +73,37 @@ export default function CouponsPage() {
 
         {/* Notification banner */}
         <NotificationPermissionBanner />
+
+        {/* First-order offer banner */}
+        {firstOrderCoupon && (
+          <div
+            className="rounded-2xl p-4 flex flex-col gap-3 animate-fadeUp"
+            style={{
+              background: 'linear-gradient(135deg,rgba(255,77,109,0.18),rgba(255,77,109,0.05))',
+              border: '1px solid rgba(255,77,109,0.25)',
+            }}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-bold text-white" style={{ fontFamily: 'Sora,sans-serif' }}>
+                  Flat 20% OFF on your first order
+                </p>
+                <p className="text-gray-300 text-[11px] mt-1">
+                  USE CODE: <span className="text-[#ff4d6d] font-semibold">FIRST20</span>
+                </p>
+              </div>
+              <button
+                onClick={() => handleApply(firstOrderCoupon.code)}
+                className="text-xs font-bold text-[#ff4d6d] px-3 py-1 rounded-full bg-white/10 hover:bg-white/15 transition-all"
+              >
+                Apply Now
+              </button>
+            </div>
+            <p className="text-gray-400 text-[11px]">
+              This coupon is only shown to users who are eligible for their first order.
+            </p>
+          </div>
+        )}
 
         {/* Expiry alert strip */}
         {expiringCount > 0 && (

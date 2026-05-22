@@ -8,6 +8,7 @@ export type Coupon = {
   description: string;
   discount: number;
   type: 'percentage' | 'flat';
+  targetType?: 'all' | 'new_user';
   minOrder: number;
   maxDiscount: number;
   usageLimit: number;
@@ -81,7 +82,7 @@ export const useCouponStore = create<CouponState>((set) => ({
       usage_limit: coupon.usageLimit,
       expiry: coupon.expiry,
       active: coupon.active,
-      target_type: 'all',
+      target_type: coupon.targetType ?? 'all',
       push_notify: coupon.pushNotify ?? false,
       notify_before_expiry_hours: coupon.notifyBeforeExpiryHours ?? 24,
       image_url: null,

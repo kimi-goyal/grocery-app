@@ -263,12 +263,35 @@ def ensure_default_new_user_coupon(db: Session) -> Coupon:
     code = 'FIRST20'
     existing = db.query(Coupon).filter(func.upper(Coupon.code) == code).first()
     if existing:
+        # Ensure the default first-order coupon metadata stays consistent
+        updated = False
+        if existing.title != 'Flat 20% OFF on your first order':
+            existing.title = 'Flat 20% OFF on your first order'
+            updated = True
+        if existing.description != 'Use this code on your first order for a one-time 20% discount.':
+            existing.description = 'Use this code on your first order for a one-time 20% discount.'
+            updated = True
+        if existing.discount != 20.0:
+            existing.discount = 20.0
+            updated = True
+        if existing.type != DiscountType.percentage:
+            existing.type = DiscountType.percentage
+            updated = True
+        if existing.min_order != 0.0:
+            existing.min_order = 0.0
+            updated = True
+        if existing.target_type != CouponTargetType.new_user:
+            existing.target_type = CouponTargetType.new_user
+            updated = True
+        if updated:
+            db.commit()
+            db.refresh(existing)
         return existing
 
     expiry = datetime.now(timezone.utc) + timedelta(days=365)
     default_coupon = CouponCreate(
         code=code,
-        title='20% OFF on your first order',
+        title='Flat 20% OFF on your first order',
         description='Use this code on your first order for a one-time 20% discount.',
         discount=20.0,
         type=DiscountType.percentage,

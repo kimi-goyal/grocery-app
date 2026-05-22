@@ -90,8 +90,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { MOCK_ADMIN } from '../data/mockData';
-import { tokenManager } from '../../lib/tokenManager';
-import { privateApi } from '../../services/api';
+import { adminTokenManager } from '../../lib/adminTokenManager';
+import { adminApi } from '../../services/adminApi';
  
 interface AdminUser { email: string; name: string; role: string; }
 interface AdminAuthState {
@@ -122,9 +122,9 @@ export const useAdminAuthStore = create<AdminAuthState>()(
           });
           if (response.ok) {
             const data = await response.json();
-            tokenManager.setTokens(data.access_token, data.refresh_token);
+            adminTokenManager.setTokens(data.access_token, data.refresh_token);
 
-            const meResponse = await privateApi.get('/auth/me');
+            const meResponse = await adminApi.get('/auth/me');
             if (meResponse.status === 200) {
               const meData = meResponse.data;
               set({ admin: { email: meData.email, name: meData.name, role: meData.role }, isAdminAuthenticated: true, initialized: true, loading: false });
@@ -151,17 +151,17 @@ export const useAdminAuthStore = create<AdminAuthState>()(
         } catch (error) {
           console.error('Logout error:', error);
         }
-        tokenManager.clearTokens();
+        adminTokenManager.clearTokens();
         set({ admin: null, isAdminAuthenticated: false, initialized: true });
       },
       initAuth: async () => {
         set({ isAdminAuthenticated: false, initialized: false });
         try {
-          if (!tokenManager.isAccessValid()) {
+          if (!adminTokenManager.isAccessValid()) {
             set({ admin: null, isAdminAuthenticated: false, initialized: true });
             return;
           }
-          const response = await privateApi.get('/auth/me');
+          const response = await adminApi.get('/auth/me');
           if (response.status === 200) {
             const data = response.data;
             if (data.role === 'admin') {

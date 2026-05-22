@@ -10,7 +10,7 @@ import { Plus, Trash2, ToggleLeft, ToggleRight, Tag } from 'lucide-react';
 export default function CouponsPage() {
   const { coupons, loading, fetchCoupons, addCoupon, toggleActive, deleteCoupon } = useCouponStore();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ code: '', title: '', discount: '', type: 'percentage' as 'percentage' | 'flat', minOrder: '', maxDiscount: '', usageLimit: '', expiry: '', description: '', active: true, pushNotify: false, notifyBeforeExpiryHours: '24' });
+  const [form, setForm] = useState({ code: '', title: '', discount: '', type: 'percentage' as 'percentage' | 'flat', targetType: 'all' as 'all' | 'new_user', minOrder: '', maxDiscount: '', usageLimit: '', expiry: '', description: '', active: true, pushNotify: false, notifyBeforeExpiryHours: '24' });
   const set = (k: string, v: string | boolean | number) => setForm(f => ({ ...f, [k]: v }));
 
   useEffect(() => {
@@ -37,6 +37,7 @@ export default function CouponsPage() {
       title: form.title,
       discount: Number(form.discount),
       type: form.type,
+      targetType: form.targetType,
       minOrder: Number(form.minOrder),
       maxDiscount: Number(form.maxDiscount),
       usageLimit: Number(form.usageLimit),
@@ -47,7 +48,7 @@ export default function CouponsPage() {
       notifyBeforeExpiryHours: Number(form.notifyBeforeExpiryHours),
     });
     setOpen(false);
-    setForm({ code: '', title: '', discount: '', type: 'percentage', minOrder: '', maxDiscount: '', usageLimit: '', expiry: '', description: '', active: true, pushNotify: false, notifyBeforeExpiryHours: '24' });
+    setForm({ code: '', title: '', discount: '', type: 'percentage', targetType: 'all', minOrder: '', maxDiscount: '', usageLimit: '', expiry: '', description: '', active: true, pushNotify: false, notifyBeforeExpiryHours: '24' });
   };
 
   const activeCount = coupons.filter(c => c.active).length;
@@ -159,6 +160,7 @@ export default function CouponsPage() {
             <AdminInput label="Coupon Title *" placeholder="e.g. Summer Sale" value={form.title} onChange={e => set('title', e.target.value)} required />
           </div>
           <AdminSelect label="Discount Type" value={form.type} onChange={e => set('type', e.target.value)} options={[{ value: 'percentage', label: 'Percentage (%)' }, { value: 'flat', label: 'Flat Amount (₹)' }]} />
+          <AdminSelect label="Coupon Target" value={form.targetType} onChange={e => set('targetType', e.target.value)} options={[{ value: 'all', label: 'All users' }, { value: 'new_user', label: 'First order users only' }]} />
           <AdminInput label={form.type === 'percentage' ? 'Discount % *' : 'Flat Amount (₹) *'} type="number" placeholder={form.type === 'percentage' ? '20' : '50'} value={form.discount} onChange={e => set('discount', e.target.value)} required />
           <AdminInput label="Min Order Value (₹) *" type="number" placeholder="100" value={form.minOrder} onChange={e => set('minOrder', e.target.value)} required />
           <AdminInput label="Max Discount (₹) *" type="number" placeholder="100" value={form.maxDiscount} onChange={e => set('maxDiscount', e.target.value)} required />
