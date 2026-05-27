@@ -12,6 +12,7 @@ from app.schemas.coupon import (
 )
 from app.services import coupon_service
 from app.models.push_subscription import PushSubscription
+from app.sockets import manager
 import uuid
 
 # ── Admin routes ──────────────────────────────────────────────────────────────
@@ -24,12 +25,19 @@ def list_coupons(db: Session = Depends(get_db), _: User = Depends(require_admin)
 
 
 @admin_router.post("", response_model=CouponOut, status_code=201)
-def create_coupon(data: CouponCreate, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+async def create_coupon(data: CouponCreate, db: Session = Depends(get_db), _: User = Depends(require_admin)):
     try:
         import sys
         print(f"DEBUG: Received coupon data: {data}", file=sys.stderr)
         print(f"DEBUG: Expiry type: {type(data.expiry)}, value: {data.expiry}", file=sys.stderr)
-        return coupon_service.create_coupon(db, data)
+        coupon = coupon_service.create_coupon(db, data)
+        await manager.broadcast({
+            "type": "coupon_added",
+            "code": coupon.code,
+            "title": "New Coupon Available",
+            "body": f"Use code {coupon.code} on your next order!",
+        })
+        return coupon
     except Exception as e:
         import sys
         print(f"DEBUG: Error creating coupon: {e}", file=sys.stderr)

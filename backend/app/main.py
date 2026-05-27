@@ -22,6 +22,7 @@ from app.routers.coupon_router import admin_router as coupon_admin_router
 from app.routers.coupon_router import user_router as coupon_user_router
 from app.routers.coupon_router import push_router
 from app.routers import payment_router 
+from app.routers.ws_router import router as ws_router
 from app.services.coupon_service import cleanup_expired_coupons, ensure_default_new_user_coupon
 from app.routers.user_order_router import router as user_order_router
 import app.core.firebase_admin  # noqa: F401
@@ -72,6 +73,7 @@ app.include_router(order_router.router)
 app.include_router(coupon_admin_router)
 app.include_router(coupon_user_router)
 app.include_router(push_router)
+app.include_router(ws_router)
 app.include_router(user_order_router)
 
 # Add this to your existing main.py on_startup:

@@ -15,13 +15,13 @@ export default function OrderConfirmed() {
   }, []);
 
   const handleTrack = () => {
-    reset();
     navigate('/orders');
+    reset();
   };
 
   const handleContinue = () => {
-    reset();
     navigate('/home');
+    reset();
   };
 
   return (

@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useAddressStore } from '../../store/addressStore';
 import { useCartStore } from '../../store/cartStore';
+import { useNotificationStore } from '../../store/notificationStore';
  
 export default function Navbar({ onCartOpen }: { onCartOpen: () => void }) {
   const [search, setSearch] = useState('');
@@ -19,6 +20,7 @@ export default function Navbar({ onCartOpen }: { onCartOpen: () => void }) {
   const totalItems = items.reduce((acc, item) => acc + item.qty, 0);
 
   const selectedAddress = addresses.find(a => a.id === selectedAddressId) || addresses.find(a => a.is_default) || addresses[0];
+  const notificationCount = useNotificationStore((state) => state.notifications.length);
 
   useEffect(() => {
     if (isAuthenticated && addresses.length === 0) {
@@ -278,9 +280,26 @@ export default function Navbar({ onCartOpen }: { onCartOpen: () => void }) {
               </div>
               <span className="text-[10px] text-gray-500 group-hover:text-gray-400 transition-colors">Cart</span>
             </button>
- 
- 
- 
+
+            {/* Notifications */}
+            <button
+              onClick={() => navigate('/notifications')}
+              className={`relative hidden sm:flex flex-col items-center gap-0.5 p-2 rounded-xl hover:bg-white/5 transition-colors group ${isActive('/notifications') ? 'bg-[#ff4d6d]/8' : ''}`}
+            >
+              <div className="relative">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`text-gray-300 group-hover:text-white transition-colors ${isActive('/notifications') ? 'text-[#ff4d6d]' : ''}`}>
+                  <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 01-3.46 0" />
+                </svg>
+                {notificationCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-4 bg-[#ff4d6d] rounded-full px-1 text-[9px] font-bold flex items-center justify-center text-white">
+                    {notificationCount > 9 ? '9+' : notificationCount}
+                  </span>
+                )}
+              </div>
+              <span className={`text-[10px] ${isActive('/notifications') ? 'text-[#ff4d6d]' : 'text-gray-500'}`}>Alerts</span>
+            </button>
+
             {/* Profile */}
             <div className="relative" ref={profileRef}>
               <button
@@ -336,6 +355,7 @@ export default function Navbar({ onCartOpen }: { onCartOpen: () => void }) {
                     {[
                       { label: 'My Orders', path: '/orders' },
                       { label: 'My Coupons', path: '/offers' },
+                      { label: 'Notifications', path: '/notifications' },
                       { label: 'Profile', path: '/profile' },
                     ].map((item) => (
                       <button

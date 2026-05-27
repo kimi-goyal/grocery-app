@@ -7,7 +7,7 @@ export interface ToastData {
   type: 'new_coupon' | 'expiry_warning';
   title: string;
   body: string;
-  code: string;
+  code?: string;
   hours?: number;
 }
 

@@ -7,6 +7,7 @@ from app.models.user_model import User
 from app.schemas.order import OrderOut, OrderStatusUpdate, PaginatedOrders
 from app.services import order_service
 from app.models.order import Order, OrderItem, OrderStatus
+from app.sockets import manager
 from sqlalchemy import func
 
 router = APIRouter(
@@ -57,10 +58,11 @@ def get_stats(db: Session = Depends(get_db)):
     }
 
 @router.patch("/{order_id}/status")
-def update_order_status(
+async def update_order_status(
     order_id: str,
     data: OrderStatusUpdate,
     db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
 ):
     order = db.query(Order).filter(Order.order_number == order_id).first()
 
@@ -69,5 +71,19 @@ def update_order_status(
 
     order.status = data.status
     db.commit()
+    db.refresh(order)
+
+    message = {
+        "type": "order_status",
+        "orderNumber": order.order_number,
+        "status": order.status.value,
+        "title": f"Order {order.order_number} status updated",
+        "body": f"Your order is now {order.status.value}.",
+    }
+
+    if order.user_id:
+        await manager.send_personal_message(order.user_id, message)
+    else:
+        await manager.broadcast(message)
 
     return {"msg": "Updated"}

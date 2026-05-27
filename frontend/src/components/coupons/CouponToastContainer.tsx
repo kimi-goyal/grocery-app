@@ -13,7 +13,16 @@ export default function CouponToastContainer() {
   const [toasts, setToasts] = useState<ToastData[]>([]);
 
   const addToast = useCallback((t: ToastData) => {
-    setToasts(prev => [...prev.slice(-2), t]); // max 3 stacked
+    setToasts(prev => {
+      const duplicate = prev.some((existing) =>
+        existing.type === t.type &&
+        existing.title === t.title &&
+        existing.body === t.body &&
+        existing.code === t.code,
+      );
+      if (duplicate) return prev;
+      return [...prev.slice(-2), t]; // max 3 stacked
+    });
   }, []);
 
   useEffect(() => {

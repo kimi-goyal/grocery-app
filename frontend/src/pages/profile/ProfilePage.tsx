@@ -126,6 +126,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { orderService } from '../../services/orderService';
 import { couponService } from '../../services/couponService';
+import { useNotificationStore } from '../../store/notificationStore';
  
 const MENU = [
   {
@@ -232,6 +233,7 @@ const MENU = [
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuthStore();
+  const notificationCount = useNotificationStore((state) => state.notifications.length);
   const [ordersCount, setOrdersCount] = useState(0);
   const [couponsCount, setCouponsCount] = useState(0);
   const [reviewsCount, setReviewsCount] = useState(0);
@@ -438,9 +440,16 @@ export default function ProfilePage() {
  
               {/* Label + description */}
               <div className="flex-1 min-w-0">
-                <p className="text-gray-200 text-sm font-medium group-hover:text-white transition-colors">
-                  {item.label}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-gray-200 text-sm font-medium group-hover:text-white transition-colors">
+                    {item.label}
+                  </p>
+                  {item.path === '/notifications' && notificationCount > 0 && (
+                    <span className="rounded-full bg-[#ff4d6d] px-2 py-0.5 text-[10px] font-semibold text-white">
+                      {notificationCount > 9 ? '9+' : notificationCount}
+                    </span>
+                  )}
+                </div>
                 <p className="text-gray-600 text-[10px] mt-0.5 truncate">{item.description}</p>
               </div>
  

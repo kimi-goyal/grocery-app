@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, subscribeWithSelector } from "zustand/middleware";
 import { authService } from "../services/authService";
 import { adminTokenManager } from '../lib/adminTokenManager';
+import { tokenManager } from '../lib/tokenManager';
 import type {
   RegisterPayload,
   LoginPayload,
@@ -109,7 +110,8 @@ export const useAuthStore = create<AuthState>()(
         login: async (data) => {
           set({ loading: true, error: null, fieldErrors: {} });
           try {
-            await authService.login(data); // backend sets auth cookies
+            const tokens = await authService.login(data); // backend sets auth cookies
+            tokenManager.setTokens(tokens.access_token, tokens.refresh_token);
             const me = await authService.getMe();
             // clear any admin tokens to avoid admin creds being used for user APIs
             adminTokenManager.clearTokens();
@@ -207,6 +209,18 @@ export const useAuthStore = create<AuthState>()(
         // Called on app mount to validate stored token and hydrate user
         initAuth: async () => {
           try {
+            const accessToken = tokenManager.getAccess();
+            const refreshToken = tokenManager.getRefresh();
+
+            if ((!accessToken || tokenManager.isExpired(accessToken)) && refreshToken) {
+              try {
+                const tokens = await authService.refresh();
+                tokenManager.setTokens(tokens.access_token, tokens.refresh_token);
+              } catch {
+                // ignore refresh failures; fallback to cookie auth if available
+              }
+            }
+
             const me = await authService.getMe();
             set({ user: me, isAuthenticated: true, isGuest: false });
           } catch {
@@ -221,6 +235,8 @@ export const useAuthStore = create<AuthState>()(
           } catch {
             // ignore logout failures, just clear client state
           }
+          tokenManager.clearTokens();
+          adminTokenManager.clearTokens();
           set({
             user: null,
             isAuthenticated: false,
@@ -267,7 +283,8 @@ export const useAuthStore = create<AuthState>()(
           set({ loading: true, error: null });
  
           try {
-            await authService.googleLogin(idToken);
+            const tokens = await authService.googleLogin(idToken);
+            tokenManager.setTokens(tokens.access_token, tokens.refresh_token);
             const me = await authService.getMe();
  
             // clear any admin tokens
