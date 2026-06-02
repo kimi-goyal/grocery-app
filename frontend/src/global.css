@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.input {
+  @apply w-full bg-[#0f172a] border border-white/10 rounded-xl px-4 py-4 outline-none focus:border-[#ff4d6d];
+}
+
+.btn-primary {
+  @apply w-full bg-[#ff4d6d] hover:bg-[#ff2e5c] py-4 rounded-xl font-semibold transition;
+}
+
+.btn-secondary {
+  @apply border border-white/10 hover:border-[#ff4d6d] py-4 rounded-xl px-6;
+}

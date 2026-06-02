@@ -1,0 +1,52 @@
+
+import { MOCK_SALES_DATA } from '../data/mockData';
+
+export default function MiniChart({ data }: { data?: { day: string; revenue: number }[] }) {
+  const D = data && data.length ? data : MOCK_SALES_DATA;
+  const max = Math.max(...D.map(d => d.revenue));
+  const min = Math.min(...D.map(d => d.revenue));
+  const range = max - min || 1;
+  const H = 80;
+  const W = 100;
+  const pts = D.map((d, i) => {
+    const x = (i / (D.length - 1 || 1)) * W;
+    const y = H - ((d.revenue - min) / range) * H;
+    return `${x},${y}`;
+  }).join(' ');
+
+  return (
+    <div className="w-full">
+      <svg viewBox={`0 0 ${W} ${H + 4}`} preserveAspectRatio="none" className="w-full h-20">
+        <defs>
+          <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#FF4D8D" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="#FF4D8D" stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+        <polygon
+          points={`0,${H} ${pts} ${W},${H}`}
+          fill="url(#chartGrad)"
+        />
+        <polyline
+          points={pts}
+          fill="none"
+          stroke="#FF4D8D"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {D.map((d, i) => {
+          const x = (i / (D.length - 1 || 1)) * W;
+          const y = H - ((d.revenue - min) / range) * H;
+          return <circle key={i} cx={x} cy={y} r="1.5" fill="#FF4D8D" />;
+        })}
+      </svg>
+      <div className="flex justify-between mt-1">
+        {D.map(d => (
+          <span key={d.day} className="text-[10px] text-[#94A3B8]">{d.day}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
