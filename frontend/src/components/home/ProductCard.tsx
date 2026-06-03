@@ -119,12 +119,19 @@ export default function ProductCard({ product }: { product: Product }) {
           {packLabel}
         </p>
 
-        <div className="flex items-center gap-1 mt-1">
-          <span className="text-yellow-400 text-[10px]">★</span>
-          <span className="text-gray-400 text-[10px]">
-            {product.rating} ({product.reviews})
-          </span>
-        </div>
+        {product.rating > 0 && product.reviews > 0 ? (
+          <div className="flex items-center gap-1 mt-1">
+            <span className="text-yellow-400 text-[10px]">★</span>
+            <span className="text-gray-400 text-[10px]">
+              {product.rating.toFixed(1)} ({product.reviews})
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1 mt-1">
+            <span className="text-gray-600 text-[10px]">★</span>
+            <span className="text-gray-500 text-[10px]">No ratings yet</span>
+          </div>
+        )}
 
         {product.discount > 0 && (
           <div className="mt-1 inline-block bg-green-500/20 border border-green-500/30 text-green-400 text-[10px] font-bold px-2 py-0.5 rounded-full">

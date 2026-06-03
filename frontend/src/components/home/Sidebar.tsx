@@ -112,7 +112,7 @@ export default function Sidebar({ active, onSelect }: Props) {
   }, [isAuthenticated, fetchCoupons]);
 
   return (
-    <aside className="w-[220px] shrink-0 hidden lg:flex flex-col border-r border-white/8 bg-[#050816] pt-4 min-h-[calc(100vh-64px)] sticky top-16">
+    <aside className="w-[220px] shrink-0 hidden lg:flex flex-col border-r border-white/8 bg-[#050816] pt-4 min-h-[calc(100vh-64px)] fixed left-0 top-16 h-[calc(100vh-64px)] overflow-y-auto">
      {coupons.length > 0 && (<div className="mx-3 mb-4 rounded-2xl p-4 border border-[#ff4d6d]/20 bg-gradient-to-br from-[#ff4d6d]/10 to-transparent relative overflow-hidden">
         <div className="absolute top-0 right-0 w-16 h-16 bg-[#ff4d6d]/10 rounded-bl-3xl" />
         <div className="text-[#ff4d6d] font-bold text-lg">{coupons[0]?.title }</div>

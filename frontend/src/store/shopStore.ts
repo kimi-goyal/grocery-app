@@ -12,12 +12,21 @@ export type Product = {
   unit: string;
   discount: number;
   stock: number;
+  rating: number;
+  reviews_count: number;
+};
+
+export type Subcategory = {
+  id: string;
+  name: string;
+  products: Product[];
 };
 
 export type Category = {
   id: string;
   name: string;
   image: string;
+  subcategories: Subcategory[];
   products: Product[];
 };
 
@@ -40,26 +49,51 @@ export const useShopStore = create<Store>((set) => ({
       const res = await fetch(`${API}/categories`);
       const data = await res.json();
 
-      const formatted = data.map((cat: any) => ({
-        id: cat.id,
-        name: cat.name,
-        image: cat.image_url,
-
-        // ✅ flatten products from subcategories
-        products: (cat.subcategories || []).flatMap((sub: any) =>
+      const formatted = data.map((cat: any) => {
+        // Flatten products from subcategories for main products array
+        const allProducts = (cat.subcategories || []).flatMap((sub: any) =>
           (sub.products || []).map((p: any) => ({
             id: p.id,
             name: p.name,
             price: p.price,
-            pack_size: p.pack_size,
+            pack_size: p.pack_size || 0,
             mrp: p.mrp,
             image: p.image_url,
             unit: p.unit,
             discount: p.discount,
             stock: p.stock,
+            rating: p.rating || 0,
+            reviews_count: p.reviews_count || 0,
           }))
-        ),
-      }));
+        );
+
+        // Structure subcategories with their products
+        const subcategories = (cat.subcategories || []).map((sub: any) => ({
+          id: sub.id,
+          name: sub.name,
+          products: (sub.products || []).map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            price: p.price,
+            pack_size: p.pack_size || 0,
+            mrp: p.mrp,
+            image: p.image_url,
+            unit: p.unit,
+            discount: p.discount,
+            stock: p.stock,
+            rating: p.rating || 0,
+            reviews_count: p.reviews_count || 0,
+          })),
+        }));
+
+        return {
+          id: cat.id,
+          name: cat.name,
+          image: cat.image_url,
+          subcategories,
+          products: allProducts,
+        };
+      });
 
       set({
         categories: formatted,

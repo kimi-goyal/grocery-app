@@ -89,7 +89,7 @@ export default function HomePage() {
         <Sidebar active={activeSidebar} onSelect={handleSidebarSelect} />
 
         {/* Main content */}
-        <main className="flex-1 p-6 space-y-8 min-w-0">
+        <main className="flex-1 p-6 space-y-8 min-w-0 lg:ml-[220px]">
 
           {/* Hero */}
           <div className="animate-fadeUp">
@@ -140,8 +140,8 @@ export default function HomePage() {
                           badge: p.discount > 0 ? `${Math.round(p.discount)}% OFF` : "",
                           inStock: p.stock > 0,
                           stock: p.stock,
-                          rating: 4.2,
-                          reviews: 120,
+                          rating: p.rating || 0,
+                          reviews: p.reviews_count || 0,
                         }}
                       />
                     </div>
@@ -178,8 +178,8 @@ export default function HomePage() {
                         badge: p.discount > 0 ? `${Math.round(p.discount)}% OFF` : "",
                         inStock: p.stock > 0,
                         stock: p.stock,
-                        rating: 4.2,
-                        reviews: 120,
+                        rating: p.rating || 0,
+                        reviews: p.reviews_count || 0,
                       }}
                     />
                   </div>
