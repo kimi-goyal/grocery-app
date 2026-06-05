@@ -15,12 +15,66 @@ from app.config.settings import settings
 # ── Categories ────────────────────────────────────────────────────────────────
 
 def get_all_categories(db: Session) -> list[Category]:
-    return (
+    cats = (
         db.query(Category)
         .options(joinedload(Category.subcategories).joinedload(Subcategory.products))
         .order_by(Category.name)
         .all()
     )
+
+    # Return plain serializable structures so frontend always receives
+    # `rating` and `reviews_count` fields for products.
+    out = []
+    for c in cats:
+        subcats = []
+        for s in c.subcategories:
+            prods = []
+            for p in s.products:
+                prods.append({
+                    "id": p.id,
+                    "name": p.name,
+                    "description": p.description,
+                    "price": p.price,
+                    "mrp": p.mrp,
+                    "discount": getattr(p, 'discount', 0),
+                    "stock": p.stock,
+                    "unit": p.unit,
+                    "sku": p.sku,
+                    "image_url": p.image_url,
+                    "category_id": p.category_id,
+                    "subcategory_id": p.subcategory_id,
+                    "active": p.active,
+                    "pack_size": p.pack_size,
+                    "low_stock_threshold": p.low_stock_threshold,
+                    "created_at": p.created_at,
+                    "updated_at": p.updated_at,
+                    "selling_count": getattr(p, 'selling_count', 0),
+                    "view_count": getattr(p, 'view_count', 0),
+                    "cart_count": getattr(p, 'cart_count', 0),
+                    "rating": float(getattr(p, 'rating', 0) or 0),
+                    "reviews_count": int(getattr(p, 'reviews_count', 0) or 0),
+                    "is_featured": bool(getattr(p, 'is_featured', False)),
+                    "is_bestseller": bool(getattr(p, 'is_bestseller', False)),
+                })
+            subcats.append({
+                "id": s.id,
+                "name": s.name,
+                "category_id": s.category_id,
+                "is_active": s.is_active,
+                "products": prods,
+            })
+
+        out.append({
+            "id": c.id,
+            "name": c.name,
+            "image_url": c.image_url,
+            "is_active": c.is_active,
+            "product_count": sum(len(sc.products) for sc in c.subcategories),
+            "created_at": c.created_at,
+            "subcategories": subcats,
+        })
+
+    return out
 
 
 def get_category(db: Session, cat_id: str) -> Category:

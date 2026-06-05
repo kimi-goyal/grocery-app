@@ -21,7 +21,7 @@ def send_push(endpoint: str, p256dh: str, auth: str, payload: dict) -> bool:
         return False
 
     vapid_private = os.getenv("VAPID_PRIVATE_KEY", "")
-    vapid_email = os.getenv("VAPID_EMAIL", "mailto:admin@freshcart.com")
+    vapid_email = os.getenv("VAPID_EMAIL", "mailto:vidishakharbanda20@gmail.com")
 
     if not vapid_private:
         print(f"[Push] VAPID_PRIVATE_KEY not set. Payload: {payload}")

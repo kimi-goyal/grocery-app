@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { useOrderStore } from '../../store/orderStore';
 import StarRating from './StarRating';
 import type { Order } from '../../types/order.types';
- 
+import { useShopStore } from '../../store/shopStore';
+
 interface Props {
   order: Order;
   onClose: () => void;
   onDone: () => void;
 }
- 
+
 const CATEGORIES = [
   { key: 'delivery_rating', icon: '🚀', label: 'Delivery Speed' },
   { key: 'quality_rating', icon: '🌿', label: 'Freshness & Quality' },
@@ -25,6 +26,7 @@ const QUICK_REVIEWS = [
 ];
  
 export default function RatingModal({ order, onClose, onDone }: Props) {
+  const { fetchData } = useShopStore();
   const { submitRating, ratingLoading } = useOrderStore();
   const [overall, setOverall] = useState(0);
   const [delivery, setDelivery] = useState(0);
@@ -51,6 +53,7 @@ export default function RatingModal({ order, onClose, onDone }: Props) {
         review_text: review.trim() || undefined,
         item_ratings: Object.keys(itemRatings).length ? itemRatings : undefined,
       });
+      await fetchData();
       setStep('done');
       setTimeout(onDone, 1800);
     } catch (e: any) {

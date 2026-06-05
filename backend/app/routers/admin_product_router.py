@@ -28,7 +28,7 @@ async def upload_image(
 
 # ── Categories ────────────────────────────────────────────────────────────────
 
-@router.get("/categories", response_model=list[CategoryOut])
+@router.get("/categories")
 def list_categories(db: Session = Depends(get_db)):
     return product_service.get_all_categories(db)
 

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useCartStore } from "../../store/cartStore";
 
 interface Product {
-  id: string 
+  id: string
   name: string;
   price: number;
   pack_size: number;
@@ -12,7 +12,7 @@ interface Product {
   discount: number;
   unit: string;
   rating: number;
-  reviews: number;
+  reviews_count: number;
   image: string;
   badge?: string;
   inStock: boolean;
@@ -47,11 +47,11 @@ export default function ProductCard({ product }: { product: Product }) {
       return { label: "Hot Deal", tone: "red" };
     }
 
-    if (product.rating >= 4.5 && product.reviews >= 100) {
+    if (product.rating >= 4.5 && product.reviews_count >= 100) {
       return { label: "Popular", tone: "green" };
     }
 
-    if (product.reviews >= 60) {
+    if (product.reviews_count >= 60) {
       return { label: "Highly Ordered", tone: "green" };
     }
 
@@ -97,7 +97,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
       {/* Image */}
       <div className="h-[140px] rounded-xl overflow-hidden bg-white/3 flex items-center justify-center">
-          {!imgErr ? (
+        {!imgErr ? (
           <img
             src={product.image || undefined}
             alt={product.name}
@@ -119,11 +119,24 @@ export default function ProductCard({ product }: { product: Product }) {
           {packLabel}
         </p>
 
-        {product.rating > 0 && product.reviews > 0 ? (
+        {/* {product.rating > 0 && product.reviews_count > 0 ? (
           <div className="flex items-center gap-1 mt-1">
             <span className="text-yellow-400 text-[10px]">★</span>
             <span className="text-gray-400 text-[10px]">
-              {product.rating.toFixed(1)} ({product.reviews})
+              {product.rating.toFixed(1)} ({product.reviews_count})
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1 mt-1">
+            <span className="text-gray-600 text-[10px]">★</span>
+            <span className="text-gray-500 text-[10px]">No ratings yet</span>
+          </div>
+        )} */}
+        {product.rating > 0 && product.reviews_count > 0 ? (
+          <div className="flex items-center gap-1 mt-1">
+            <span className="text-yellow-400 text-[10px]">★</span>
+            <span className="text-gray-400 text-[10px]">
+              {product.rating.toFixed(1)} ({product.reviews_count})
             </span>
           </div>
         ) : (

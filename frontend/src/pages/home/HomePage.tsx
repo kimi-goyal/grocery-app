@@ -141,7 +141,7 @@ export default function HomePage() {
                           inStock: p.stock > 0,
                           stock: p.stock,
                           rating: p.rating || 0,
-                          reviews: p.reviews_count || 0,
+                          reviews_count: p.reviews_count || 0,
                         }}
                       />
                     </div>
@@ -179,7 +179,7 @@ export default function HomePage() {
                         inStock: p.stock > 0,
                         stock: p.stock,
                         rating: p.rating || 0,
-                        reviews: p.reviews_count || 0,
+                        reviews_count: p.reviews_count || 0,
                       }}
                     />
                   </div>

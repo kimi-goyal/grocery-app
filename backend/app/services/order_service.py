@@ -159,19 +159,45 @@ def get_user_order_detail(db: Session, order_id: str, user_id: str) -> Order:
  
 # ── Rating ────────────────────────────────────────────────────────────────────
  
-def submit_rating(
-    db: Session,
-    order_id: str,
-    user_id: str,
-    data: RatingSubmit,
-) -> Order:
-    order = get_user_order_detail(db, order_id, user_id)
+# def submit_rating(
+#     db: Session,
+#     order_id: str,
+#     user_id: str,
+#     data: RatingSubmit,
+# ) -> Order:
+#     order = get_user_order_detail(db, order_id, user_id)
  
+#     if order.status != OrderStatus.delivered:
+#         raise HTTPException(400, "You can only rate delivered orders.")
+#     if order.is_rated:
+#         raise HTTPException(400, "You have already rated this order.")
+ 
+#     order.is_rated = True
+#     order.overall_rating = data.overall_rating
+#     order.delivery_rating = data.delivery_rating
+#     order.quality_rating = data.quality_rating
+#     order.packaging_rating = data.packaging_rating
+#     order.review_text = data.review_text
+#     order.rated_at = datetime.now(timezone.utc)
+ 
+#     # Per-item ratings
+#     if data.item_ratings:
+#         for item in order.items:
+#             if item.id in data.item_ratings:
+#                 item.item_rating = data.item_ratings[item.id]
+#     db.commit()
+#     db.refresh(order)
+#     return order
+ 
+def submit_rating(db: Session, order_id: str, user_id: str, data: RatingSubmit) -> Order:
+    order = get_user_order_detail(db, order_id, user_id)
+
     if order.status != OrderStatus.delivered:
         raise HTTPException(400, "You can only rate delivered orders.")
     if order.is_rated:
         raise HTTPException(400, "You have already rated this order.")
- 
+
+    # ✅ Order ratings
     order.is_rated = True
     order.overall_rating = data.overall_rating
     order.delivery_rating = data.delivery_rating
@@ -179,18 +205,37 @@ def submit_rating(
     order.packaging_rating = data.packaging_rating
     order.review_text = data.review_text
     order.rated_at = datetime.now(timezone.utc)
- 
-    # Per-item ratings
+
+    # ✅ CORRECT IMPORT
+    from app.models.product import Product
+
     if data.item_ratings:
         for item in order.items:
-            if item.id in data.item_ratings:
-                item.item_rating = data.item_ratings[item.id]
- 
+            rating = data.item_ratings.get(item.id)
+            if rating is None:
+                continue
+
+            item.item_rating = rating
+
+            if not item.product_id:
+                continue
+
+            product = db.query(Product).filter(Product.id == item.product_id).first()
+
+            if product:
+                current_rating = product.rating or 0
+                current_count = product.reviews_count or 0
+
+                total_rating = current_rating * current_count
+                total_rating += rating
+
+                product.reviews_count = current_count + 1
+                product.rating = round(total_rating / product.reviews_count, 2)
+
     db.commit()
     db.refresh(order)
     return order
- 
- 
+
 # ── Admin: orders ─────────────────────────────────────────────────────────────
  
 def get_orders(
