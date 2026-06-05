@@ -1,9 +1,9 @@
-
+ 
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAdminAuthStore } from '../store/adminAuthStore';
-import { LayoutDashboard, Package, ShoppingCart, Users, Warehouse, Tag, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Users, Warehouse, Tag, ChevronLeft, ChevronRight, LogOut, Headphones } from 'lucide-react';
 import { useState } from 'react';
-
+ 
 const NAV = [
   { icon: LayoutDashboard, label: 'Dashboard', to: '/management/dashboard' },
   { icon: Package, label: 'Products', to: '/management/products' },
@@ -11,15 +11,16 @@ const NAV = [
   { icon: Users, label: 'Customers', to: '/management/customers' },
   { icon: Warehouse, label: 'Inventory', to: '/management/inventory' },
   { icon: Tag, label: 'Coupons', to: '/management/coupons' },
+  { icon: Headphones, label: 'Customer Service', to: '/management/customer-service' },
 ];
-
+ 
 export default function AdminSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const { admin, logout } = useAdminAuthStore();
   const navigate = useNavigate();
-
+ 
   const handleLogout = () => { logout(); navigate('/management/login'); };
-
+ 
   return (
     <aside className={`${collapsed ? 'w-[72px]' : 'w-[240px]'} shrink-0 h-screen sticky top-0 flex flex-col bg-[#07111A] border-r border-white/8 transition-all duration-300 z-30`}>
       {/* Logo */}
@@ -41,13 +42,13 @@ export default function AdminSidebar() {
           <ChevronLeft size={12} />
         </button>
       </div>
-
+ 
       {collapsed && (
         <button onClick={() => setCollapsed(false)} className="mx-auto mt-2 w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors">
           <ChevronRight size={12} />
         </button>
       )}
-
+ 
       {/* Admin badge */}
       {!collapsed && (
         <div className="mx-3 mt-4 mb-2 p-3 rounded-xl bg-[#FF4D8D]/8 border border-[#FF4D8D]/15">
@@ -62,7 +63,7 @@ export default function AdminSidebar() {
           </div>
         </div>
       )}
-
+ 
       {/* Nav */}
       <nav className="flex-1 px-2 py-3 flex flex-col gap-0.5 overflow-y-auto scrollbar-hide">
         {NAV.map(item => (
@@ -88,7 +89,7 @@ export default function AdminSidebar() {
           </NavLink>
         ))}
       </nav>
-
+ 
       {/* Logout */}
       <div className={`p-3 border-t border-white/8`}>
         <button
@@ -102,4 +103,3 @@ export default function AdminSidebar() {
     </aside>
   );
 }
-

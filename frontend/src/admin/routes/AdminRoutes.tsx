@@ -1,4 +1,4 @@
-
+ 
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import AdminLoginPage from '../pages/AdminLoginPage';
@@ -10,15 +10,16 @@ import OrdersPage from '../pages/OrderPage';
 import CustomersPage from '../pages/CustomersPage';
 import InventoryPage from '../pages/InventoryPage';
 import CouponsPage from '../pages/CouponsPage';
+import CustomerServicePage from '../pages/CustomerServicePage';
 import { useAdminAuthStore } from '../store/adminAuthStore';
-
+ 
 export default function AdminRoutes() {
   const { initAuth } = useAdminAuthStore();
-
+ 
   useEffect(() => {
     initAuth();
   }, []);
-
+ 
   return (
     <Routes>
       <Route path="login" element={<AdminLoginPage />} />
@@ -28,10 +29,13 @@ export default function AdminRoutes() {
         <Route path="orders" element={<OrdersPage />} />
         <Route path="customers" element={<CustomersPage />} />
         <Route path="inventory" element={<InventoryPage />} />
-        <Route path="coupons" element={<CouponsPage />} /> 
+        <Route path="coupons" element={<CouponsPage />} />
+        <Route path="customer-service" element={<CustomerServicePage />} />
         <Route index element={<Navigate to="dashboard" replace />} />
-      
+     
       </Route>
     </Routes>
   );
 }
+ 
+ 
