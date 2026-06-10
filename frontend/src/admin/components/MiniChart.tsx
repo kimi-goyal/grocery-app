@@ -2,17 +2,27 @@
 import { MOCK_SALES_DATA } from '../data/mockData';
 
 export default function MiniChart({ data }: { data?: { day: string; revenue: number }[] }) {
-  const D = data && data.length ? data : MOCK_SALES_DATA;
-  const max = Math.max(...D.map(d => d.revenue));
-  const min = Math.min(...D.map(d => d.revenue));
-  const range = max - min || 1;
   const H = 80;
   const W = 100;
-  const pts = D.map((d, i) => {
-    const x = (i / (D.length - 1 || 1)) * W;
-    const y = H - ((d.revenue - min) / range) * H;
-    return `${x},${y}`;
-  }).join(' ');
+const D =
+  data && data.length > 1 && data.some((d) => d.revenue > 0)
+    ? data
+    : MOCK_SALES_DATA;
+
+const max = Math.max(...D.map(d => d.revenue));
+const min = Math.min(...D.map(d => d.revenue));
+
+const range = max - min;
+const isFlat = range === 0;
+
+const pts = D.map((d, i) => {
+  const x = (i / Math.max(D.length - 1, 1)) * W;
+  const y = isFlat
+    ? H / 2
+    : H - ((d.revenue - min) / range) * H;
+
+  return `${x},${y}`;
+}).join(" ");
 
   return (
     <div className="w-full">

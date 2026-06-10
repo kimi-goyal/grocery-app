@@ -3,7 +3,7 @@ import { ShoppingCart, IndianRupee, Users, AlertTriangle, TrendingUp } from 'luc
 import AdminTopbar from '../components/AdminTopbar';
 import StatCard from '../components/StatCard';
 import MiniChart from '../components/MiniChart';
-import StatusBadge from '../components/StatusBadge';
+//import StatusBadge from '../components/StatusBadge';
 import { useEffect, useState } from "react";
 import { adminApi } from '../../services/adminApi';
 
