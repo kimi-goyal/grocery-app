@@ -16,13 +16,18 @@ class ConnectionManager:
         self.active_connections.setdefault(key, []).append(websocket)
         if role == 'admin':
             self.admin_connections.append(websocket)
+            # notify users that an admin is now online
+            try:
+                await self.broadcast({"type": "admin_presence", "online": True})
+            except Exception:
+                pass
         # Debug log
         try:
             print(f"[sockets] connect: user_id={user_id} role={role} active_users={len(self.active_connections)} admin_count={len(self.admin_connections)}")
         except Exception:
             pass
 
-    def disconnect(self, user_id: str, websocket: WebSocket) -> None:
+    async def disconnect(self, user_id: str, websocket: WebSocket) -> None:
         key = str(user_id)
         connections = self.active_connections.get(key)
         if connections and websocket in connections:
@@ -30,15 +35,25 @@ class ConnectionManager:
         if connections is not None and len(connections) == 0:
             self.active_connections.pop(key, None)
 
+        was_admin = False
         if websocket in self.admin_connections:
+            was_admin = True
             try:
                 self.admin_connections.remove(websocket)
             except ValueError:
                 pass
+
         try:
             print(f"[sockets] disconnect: user_id={user_id} active_users={len(self.active_connections)} admin_count={len(self.admin_connections)}")
         except Exception:
             pass
+
+        # If an admin disconnected, notify all users about admin presence
+        if was_admin:
+            try:
+                await self.broadcast({"type": "admin_presence", "online": False})
+            except Exception:
+                pass
 
     async def send_personal_message(self, user_id: str, message: dict) -> None:
         key = str(user_id)
@@ -56,13 +71,13 @@ class ConnectionManager:
                     print(f"[sockets] send_personal_message: websocket disconnect for user {user_id}")
                 except Exception:
                     pass
-                self.disconnect(user_id, connection)
+                await self.disconnect(user_id, connection)
             except Exception as e:
                 try:
                     print(f"[sockets] send_personal_message: error for user {user_id}: {e}")
                 except Exception:
                     pass
-                self.disconnect(user_id, connection)
+                await self.disconnect(user_id, connection)
 
     async def send_to_admins(self, message: dict) -> None:
         # Send a message to all currently connected admin sockets

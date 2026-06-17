@@ -78,9 +78,12 @@ export default function SupportBot() {
     const [couponInput, setCouponInput] = useState('');
     const [couponResult, setCouponResult] = useState<{ valid: boolean; message: string } | null>(null);
     const [successMsg, setSuccessMsg] = useState('');
-    const [refundInfo, setRefundInfo] = useState<{ amount: number; method: string } | null>(null);
+    // (refund info not used in UI currently)
 
     const bottomRef = useRef<HTMLDivElement>(null);
+    const chatBottomRef = useRef<HTMLDivElement>(null);
+
+
     const { isAuthenticated, user } = useAuthStore();
     const orderStore = useOrderStore.getState();
 
@@ -160,7 +163,7 @@ export default function SupportBot() {
                 type: 'missing_item',
                 message: 'Customer reported missing item.',
             });
-            setRefundInfo({ amount: selectedOrder.total_amount, method: 'original payment method' });
+            // refund info recorded server-side; UI shows success message instead
             go('success');
             setSuccessMsg(`We're sorry about that! A refund of ₹${selectedOrder.total_amount} will be initiated to your ${selectedOrder.status === 'Delivered' ? 'original payment method' : 'wallet'} within 24 hours.`);
         } catch {
@@ -187,57 +190,61 @@ export default function SupportBot() {
         }
     };
 
-    // ── Support chat (escalate) ─────────────────────────────────────────────
+
+
     const [chatMessages, setChatMessages] = useState<BotMessage[]>([]);
     const [chatInput, setChatInput] = useState('');
     const [chatConnected, setChatConnected] = useState(false);
     const [chatLoading, setChatLoading] = useState(false);
+    const [chatTicketId, setChatTicketId] = useState<string | null>(null);
+    const [showHistory, setShowHistory] = useState(false);
+    const [historyTickets, setHistoryTickets] = useState<any[]>([]);
 
     useEffect(() => {
         const handler = (e: CustomEvent) => {
             const payload = e.detail as any;
-            const msg: BotMessage = {
+            setChatMessages(s => [...s, {
                 id: `s-${Date.now()}`,
                 type: 'bot',
                 text: payload.text || 'Message from support',
                 time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-            };
-            setChatMessages(s => [...s, msg]);
-            setUnread(u => u + 1);
+            }]);
+            if (!open) setUnread(u => u + 1);
         };
-
         window.addEventListener('support:message', handler as EventListener);
         return () => window.removeEventListener('support:message', handler as EventListener);
-    }, []);
+    }, [open]);
 
-    const startChat = async () => {
+    useEffect(() => {
+        if (screen === 'escalate' && !chatConnected) autoConnect();
+    }, [screen]);
+
+    useEffect(() => {
+        chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [chatMessages]);
+
+    const autoConnect = async () => {
+        if (chatConnected) return;
         setChatLoading(true);
-        setChatMessages([]);
         try {
-            const res = await privateApi.post('/support/message', { text: 'User connected to support', type: 'connect' });
-            const adminOnline = res.data?.admin_online;
-            if (adminOnline) {
-                setChatConnected(true);
-                setChatMessages([{
-                    id: `sys-${Date.now()}`,
-                    type: 'bot',
-                    text: 'You are now connected to an agent. Say hi 👋',
-                    time: now(),
-                }]);
-            } else {
-                setChatConnected(false);
-                setChatMessages([{
-                    id: `sys-${Date.now()}`,
-                    type: 'bot',
-                    text: 'All agents are currently offline. Leave a message and we will reply soon.',
-                    time: now(),
-                }]);
+            const res = await privateApi.post('/support/message', { text: '__connect__', type: 'connect' });
+            if (res.data?.ticket_id) {
+                setChatTicketId(res.data.ticket_id);
             }
-        } catch {
-            setChatMessages([{
+            setChatConnected(true);
+            setChatMessages(prev => [...prev, {
                 id: `sys-${Date.now()}`,
-                type: 'bot',
-                text: 'Unable to reach support right now. Please try again later.',
+                type: 'bot' as const,
+                text: res.data?.admin_online
+                    ? 'Connected! An agent is online — say hi 👋'
+                    : "All agents are offline. Leave a message and we'll reply within a few hours.",
+                time: now(),
+            }]);
+        } catch {
+            setChatMessages(prev => [...prev, {
+                id: `err-${Date.now()}`,
+                type: 'bot' as const,
+                text: 'Could not reach support. Check your connection.',
                 time: now(),
             }]);
         } finally {
@@ -245,18 +252,45 @@ export default function SupportBot() {
         }
     };
 
-    const sendChatMessage = async () => {
-        if (!chatInput.trim()) return;
-        const text = chatInput.trim();
-        // append locally
-        setChatMessages(s => [...s, { id: `u-${Date.now()}`, type: 'user', text, time: now() } as any]);
-        setChatInput('');
+    const loadMyHistory = async () => {
         try {
-            await privateApi.post('/support/message', { text, type: 'message' });
-        } catch {
-            setChatMessages(s => [...s, { id: `err-${Date.now()}`, type: 'bot', text: 'Failed to send. Try again.', time: now() }]);
+            const res = await privateApi.get('/support/mine');
+            setHistoryTickets(res.data?.conversations || []);
+            setShowHistory(true);
+        } catch (e) {
+            console.error('failed to load history', e);
         }
     };
+
+    const openHistoryTicket = async (ticketId: string) => {
+        try {
+            const res = await privateApi.get(`/support/conversations/${ticketId}`);
+            const msgs = res.data?.messages || [];
+            const mapped: BotMessage[] = msgs.map((m: any, i: number) => ({ id: m.message_id || `h-${i}`, type: m.from_role === 'admin' ? 'bot' : 'user', text: m.text, time: m.time || now() }));
+            setChatMessages(mapped);
+            setChatTicketId(ticketId);
+            setShowHistory(false);
+            setChatConnected(true);
+        } catch (e) {
+            console.error('failed to open ticket', e);
+        }
+    };
+
+    const sendChatMessage = async () => {
+        const text = chatInput.trim();
+        if (!text) return;
+        setChatMessages(s => [...s, { id: `u-${Date.now()}`, type: 'user', text, time: now() }]);
+        setChatInput('');
+        try {
+            await privateApi.post('/support/message', { text, type: 'message', ticket_id: chatTicketId });
+        } catch {
+            setChatMessages(s => [...s, {
+                id: `err-${Date.now()}`, type: 'bot',
+                text: 'Message failed to send. Try again.', time: now(),
+            }]);
+        }
+    };
+
 
     // ─── Render ────────────────────────────────────────────────────────────────
 
@@ -342,7 +376,7 @@ export default function SupportBot() {
                                     <MenuTile icon="📦" label="My Orders" onClick={goOrders} />
                                     <MenuTile icon="🔖" label="Coupon Issue" onClick={() => go('coupon_issue')} />
                                     <MenuTile icon="🚀" label="Delivery Info" onClick={() => go('delivery_info')} />
-                                    <MenuTile icon="💬" label="Talk to Us" onClick={() => go('escalate')} />
+                                    <MenuTile icon="💬" label="Talk to Us" onClick={() => { setChatTicketId(null); setChatMessages([]); setChatConnected(false); go('escalate'); }} />
                                 </div>
                             </>
                         )}
@@ -654,63 +688,146 @@ export default function SupportBot() {
 
 
                         {/* ════════════════════ ESCALATE ════════════════════ */}
-                        {screen === 'escalate' && (
-                            <>
-                                <BotBubble>
-                                    No worries! Our support team is here to help 💬
-                                </BotBubble>
-                                <BotBubble delay={400}>
-                                    Average response time: <strong style={{ color: '#22c55e' }}>under 5 minutes</strong> during 9 AM – 10 PM.
-                                </BotBubble>
+                       
+{/* ════════════════════ ESCALATE ════════════════════ */}
+{screen === 'escalate' && (
+  <div className="flex flex-col gap-0">
+    {/* Status bar */}
+    <div
+      className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3"
+      style={{
+        background: chatConnected ? 'rgba(34,197,94,0.08)' : 'rgba(234,179,8,0.08)',
+        border: `1px solid ${chatConnected ? 'rgba(34,197,94,0.2)' : 'rgba(234,179,8,0.2)'}`,
+      }}
+    >
+      {chatLoading ? (
+        <svg className="w-3.5 h-3.5 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+      ) : (
+        <span className="w-2 h-2 rounded-full shrink-0" style={{
+          background: chatConnected ? '#22c55e' : '#eab308',
+          boxShadow: chatConnected ? '0 0 6px #22c55e' : '0 0 6px #eab308',
+        }} />
+      )}
+      <p className="text-xs font-medium" style={{ color: chatConnected ? '#4ade80' : '#fde047' }}>
+        {chatLoading
+          ? 'Connecting to support...'
+          : chatConnected
+          ? 'Support connected · avg. reply < 5 min'
+          : 'Agents offline · leave a message'}
+      </p>
+    </div>
 
-                                <div className="flex flex-col gap-2 pt-2">
-                                    <div className="flex-1 max-h-48 overflow-y-auto p-2 space-y-2">
-                                        {chatMessages.length === 0 && (
-                                            <div className="text-gray-400 text-sm text-center">Start the conversation — say hi 👋</div>
-                                        )}
+    {/* Messages */}
+    <div
+      className="overflow-y-auto scrollbar-hide space-y-3 pr-1"
+      style={{ height: '320px' }}
+    >
+            <div className="flex justify-end mb-2">
+                <button onClick={loadMyHistory} className="text-xs text-[#ff4d6d] underline">View chat history</button>
+            </div>
+      {chatMessages.length === 0 && !chatLoading && (
+        <div className="flex flex-col items-center justify-center h-full gap-2">
+          <div className="w-10 h-10 rounded-2xl bg-[#ff4d6d]/10 border border-[#ff4d6d]/20 flex items-center justify-center text-xl">
+            💬
+          </div>
+          <p className="text-gray-500 text-xs text-center">
+            Your chat with our support team<br />will appear here
+          </p>
+        </div>
+      )}
 
-                                        {chatMessages.map(m => (
-                                            m.type === 'bot' ? (
-                                                <div key={m.id} className="flex gap-2 items-start">
-                                                    <div className="w-6 h-6 rounded-lg bg-[#ff4d6d]/15 border border-[#ff4d6d]/25 flex items-center justify-center text-sm shrink-0 mt-0.5">🛒</div>
-                                                    <div className="px-3 py-2.5 rounded-2xl text-sm text-gray-200 leading-relaxed max-w-[85%]" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>{m.text}</div>
-                                                </div>
-                                            ) : (
-                                                <div key={m.id} className="flex justify-end">
-                                                    <div className="px-3 py-2.5 rounded-2xl text-sm text-white leading-relaxed max-w-[85%]" style={{ background: 'linear-gradient(135deg,#ff4d6d,#e63c5a)' }}>{m.text}</div>
-                                                </div>
-                                            )
-                                        ))}
-                                    </div>
+      {chatMessages.map(m => (
+        m.type === 'user' ? (
+          <div key={m.id} className="flex justify-end gap-2 items-end">
+            <div className="flex flex-col items-end gap-1 max-w-[78%]">
+              <div className="px-3.5 py-2.5 rounded-2xl rounded-br-sm text-sm text-white leading-relaxed"
+                style={{ background: 'linear-gradient(135deg,#ff4d6d,#e63c5a)' }}>
+                {m.text}
+              </div>
+              <span className="text-[10px] text-gray-600 pr-1">{m.time}</span>
+            </div>
+            <div className="w-7 h-7 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-xs shrink-0 mb-4">
+              {(user?.name || 'U')[0].toUpperCase()}
+            </div>
+          </div>
+        ) : (
+          <div key={m.id} className="flex gap-2 items-end">
+            <div className="w-7 h-7 rounded-xl bg-[#ff4d6d]/15 border border-[#ff4d6d]/25 flex items-center justify-center text-sm shrink-0 mb-4">
+              🛒
+            </div>
+            <div className="flex flex-col gap-1 max-w-[78%]">
+              <div className="px-3.5 py-2.5 rounded-2xl rounded-bl-sm text-sm text-gray-200 leading-relaxed"
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                {m.text}
+              </div>
+              <span className="text-[10px] text-gray-600 pl-1">{m.time}</span>
+            </div>
+          </div>
+        )
+      ))}
+      <div ref={chatBottomRef} />
+    </div>
 
-                                    <div className="flex items-center gap-2 pt-2">
-                                        <input
-                                            value={chatInput}
-                                            onChange={e => setChatInput(e.target.value)}
-                                            onKeyDown={e => e.key === 'Enter' && sendChatMessage()}
-                                            placeholder={chatConnected ? 'Type a message...' : 'Type a message (agents may be offline)'}
-                                            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none"
-                                        />
-                                        <button
-                                            onClick={sendChatMessage}
-                                            disabled={chatLoading || !chatInput.trim()}
-                                            className="px-4 py-2.5 rounded-xl text-xs font-bold text-white disabled:opacity-40"
-                                            style={{ background: 'linear-gradient(135deg,#ff4d6d,#e63c5a)' }}
-                                        >
-                                            Send
-                                        </button>
-                                        <button
-                                            onClick={startChat}
-                                            className="px-3 py-2 rounded-xl text-xs text-gray-300 border border-white/10 hover:bg-white/5"
-                                        >
-                                            Connect
-                                        </button>
-                                    </div>
+        {/* History Modal */}
+        {showHistory && (
+            <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/60">
+                <div className="bg-white rounded-xl p-4 w-[320px] max-h-[60vh] overflow-y-auto">
+                    <h3 className="font-semibold mb-2">Your support conversations</h3>
+                    {historyTickets.length === 0 && <p className="text-sm text-gray-600">No past conversations.</p>}
+                    {historyTickets.map(t => (
+                        <button key={t.ticket_id} className="w-full text-left p-2 rounded hover:bg-gray-100" onClick={() => openHistoryTicket(t.ticket_id)}>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <div className="text-sm font-semibold">{t.from_name || 'Support'}</div>
+                                    <div className="text-xs text-gray-500">{t.last_time ? new Date(t.last_time).toLocaleString() : ''}</div>
                                 </div>
+                                <div className="text-xs text-gray-500">{t.status}</div>
+                            </div>
+                        </button>
+                    ))}
+                    <div className="mt-3 text-right">
+                        <button className="px-3 py-1 rounded bg-gray-200" onClick={() => setShowHistory(false)}>Close</button>
+                    </div>
+                </div>
+            </div>
+        )}
 
-                                <p className="text-center text-gray-600 text-[10px] pt-2">Support hours: 9 AM – 10 PM, 7 days a week</p>
-                            </>
-                        )}
+    {/* Input */}
+    <div className="mt-3 flex items-center gap-2 pt-3"
+      style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <input
+        value={chatInput}
+        onChange={e => setChatInput(e.target.value)}
+        onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendChatMessage()}
+        placeholder="Type a message..."
+        disabled={chatLoading}
+        className="flex-1 px-3.5 py-2.5 rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none disabled:opacity-40"
+        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+        onFocus={e => (e.currentTarget.style.borderColor = 'rgba(255,77,109,0.4)')}
+        onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
+      />
+      <button
+        onClick={sendChatMessage}
+        disabled={chatLoading || !chatInput.trim()}
+        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 active:scale-95 disabled:opacity-40 transition-all"
+        style={{ background: 'linear-gradient(135deg,#ff4d6d,#e63c5a)' }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+          <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" />
+        </svg>
+      </button>
+    </div>
+
+    <p className="text-center text-gray-700 text-[10px] pt-2.5">
+      Support hours: 9 AM – 10 PM, 7 days a week
+    </p>
+  </div>
+)}
+
+
 
                         <div ref={bottomRef} />
                     </div>

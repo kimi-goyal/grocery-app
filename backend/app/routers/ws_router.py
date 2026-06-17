@@ -30,6 +30,6 @@ async def websocket_notifications(websocket: WebSocket, token: str | None = Quer
         while True:
             await websocket.receive_text()
     except WebSocketDisconnect:
-        manager.disconnect(user_id, websocket)
+        await manager.disconnect(user_id, websocket)
     except Exception:
-        manager.disconnect(user_id, websocket)
+        await manager.disconnect(user_id, websocket)

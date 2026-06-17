@@ -119,6 +119,18 @@ const handleMessage = (event: MessageEvent) => {
     // Support chat messages from admin
     if (payload.type === 'support_chat') {
       try {
+        // dedupe by message_id to avoid duplicate deliveries from multiple sockets/listeners
+        try {
+          // create global seen set if missing
+          (window as any).__seenSupportMessageIds = (window as any).__seenSupportMessageIds || new Set();
+        } catch (e) {
+          // ignore
+        }
+        const seen = (window as any).__seenSupportMessageIds as Set<string> | undefined;
+        const mid = payload.message_id || `${payload.from_user_id || ''}-${payload.time || ''}-${payload.text || ''}`;
+        if (seen && seen.has(mid)) return;
+        if (seen) seen.add(mid);
+
         console.debug('[wsService] support_chat received', payload);
         window.dispatchEvent(new CustomEvent('support:message', { detail: payload }));
       } catch (e) {
