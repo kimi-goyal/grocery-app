@@ -86,10 +86,17 @@ export const useAdminCallbackStore = create<AdminCallbackStore>((set, get) => ({
   },
  
   addCallback: (callback: CallbackNotification) => {
-    set((state) => ({
-      callbacks: [callback, ...state.callbacks],
-      pendingCount: state.pendingCount + 1,
-    }));
+    set((state) => {
+      // Check if callback already exists to prevent duplicates
+      const alreadyExists = state.callbacks.some(cb => cb.id === callback.id);
+      if (alreadyExists) {
+        return state;
+      }
+      return {
+        callbacks: [callback, ...state.callbacks],
+        pendingCount: state.pendingCount + 1,
+      };
+    });
   },
 }));
  

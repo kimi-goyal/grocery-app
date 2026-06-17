@@ -40,9 +40,7 @@ export default function AppRoutes() {
       <Route
         path="/home"
         element={
-          <ProtectedRoute>
             <HomePage />
-          </ProtectedRoute>
         }
       />
  

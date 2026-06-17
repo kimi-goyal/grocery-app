@@ -1,4 +1,3 @@
-
 import { ShoppingCart, IndianRupee, Users, AlertTriangle, TrendingUp } from 'lucide-react';
 import AdminTopbar from '../components/AdminTopbar';
 import StatCard from '../components/StatCard';
@@ -6,8 +5,8 @@ import MiniChart from '../components/MiniChart';
 import StatusBadge from '../components/StatusBadge';
 import { useEffect, useState } from "react";
 import { adminApi } from '../../services/adminApi';
-
-
+ 
+ 
 type Stats = {
   total_orders: number;
   total_orders_delta: number;
@@ -18,7 +17,7 @@ type Stats = {
   low_stock_items: number;
   recent_orders?: Array<{ id: string; customer: string; amount: number; status: string; date: string }>;
 };
-
+ 
 type TopProduct = {
   id: string;
   name: string;
@@ -26,29 +25,29 @@ type TopProduct = {
   revenue: number;
   image_url: string;
 };
-
+ 
 type SalesDataPoint = {
   day: string;
   revenue: number;
 };
-
+ 
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [salesData, setSalesData] = useState<SalesDataPoint[]>([]);
-
+ 
   useEffect(() => {
     adminApi.get('/admin/dashboard/stats')
       .then((response) => setStats(response.data))
       .catch((err) => console.error('Failed to load dashboard stats', err));
-
+ 
     adminApi.get('/admin/dashboard/top-products?limit=4')
       .then((response) => setTopProducts(response.data))
       .catch((err) => {
         console.error('Failed to load top products', err);
         setTopProducts([]);
       });
-
+ 
     adminApi.get('/admin/dashboard/sales?period=week')
       .then((response) => setSalesData(response.data))
       .catch((err) => {
@@ -56,13 +55,13 @@ export default function DashboardPage() {
         setSalesData([]);
       });
   }, []);
-
-
+ 
+ 
   return (
     <div className="flex-1 overflow-y-auto">
       <AdminTopbar title="Dashboard Overview" />
       <div className="p-6 space-y-6">
-
+ 
         {/* Stat Cards */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 animate-fadeUp">
           <StatCard label="Total Orders" value={stats?.total_orders || 0} delta={stats?.total_orders_delta} icon={ShoppingCart} color="#FF4D8D" />
@@ -70,7 +69,7 @@ export default function DashboardPage() {
           <StatCard label="Customers" value={stats?.total_customers || 0} delta={stats?.total_customers_delta} icon={Users} color="#3b82f6" />
           <StatCard label="Low Stock Items" value={stats?.low_stock_items || 0} icon={AlertTriangle} color="#f59e0b" />
         </div>
-
+ 
         {/* Chart + Top Products */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 animate-fadeUp delay-100">
           <div className="xl:col-span-2 bg-[rgba(17,25,40,0.75)] border border-white/8 rounded-2xl p-5">
@@ -98,7 +97,7 @@ export default function DashboardPage() {
               ))}
             </div>
           </div>
-
+ 
           <div className="bg-[rgba(17,25,40,0.75)] border border-white/8 rounded-2xl p-5">
             <h3 className="text-white font-bold mb-4" style={{ fontFamily: 'Sora,sans-serif' }}>Top Selling Products</h3>
             <div className="flex flex-col gap-3">
@@ -122,7 +121,7 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-
+ 
         {/* Recent Orders */}
         <div className="bg-[rgba(17,25,40,0.75)] border rounded-2xl animate-fadeUp delay-200">
           <div className="flex items-center justify-between p-5 ">
@@ -156,5 +155,6 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-
+ 
+ 
+ 

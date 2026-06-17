@@ -148,7 +148,7 @@ def get_user_orders(
 def get_user_order_detail(db: Session, order_id: str, user_id: str) -> Order:
     order = (
         db.query(Order)
-        .options(joinedload(Order.items))
+        .options(joinedload(Order.items), joinedload(Order.driver))
         .filter(Order.id == order_id, Order.user_id == user_id)
         .first()
     )
