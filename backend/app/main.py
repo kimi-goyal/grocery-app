@@ -137,7 +137,7 @@ from app.routers import (
     admin_customer_router,
     admin_dashboard_router,
     admin_driver_router,
-    address_router, payment_router, order_router
+    address_router, payment_router, order_router,support_router
 )
 
 from app.routers.coupon_router import admin_router as coupon_admin_router
@@ -182,6 +182,7 @@ app.include_router(admin_customer_router.router)
 app.include_router(admin_driver_router.router)
 app.include_router(payment_router.router)
 app.include_router(address_router.router)
+app.include_router(support_router.router)
 app.include_router(order_router.router)
 app.include_router(coupon_admin_router)
 app.include_router(coupon_user_router)

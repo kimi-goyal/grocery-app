@@ -23,7 +23,9 @@ async def websocket_notifications(websocket: WebSocket, token: str | None = Quer
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
-    await manager.connect(user_id, websocket)
+    role = payload.get("role")
+    print(f"[ws_router] websocket connect user_id={user_id} role={role}")
+    await manager.connect(user_id, websocket, role=role)
     try:
         while True:
             await websocket.receive_text()

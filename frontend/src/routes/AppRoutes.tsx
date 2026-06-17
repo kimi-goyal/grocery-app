@@ -14,9 +14,11 @@ import OrdersPage from "../pages/orders/OrderPage";
 import CustomerCarePage from "../pages/CustomerCarePage";
 import SettingsPage from "../pages/SettingsPage";
 import NotificationPage from "../pages/NotificationPage";
+import SupportBot from "../components/chat/SupportBot";
  
 export default function AppRoutes() {
   return (
+    <>
     <Routes>
  
       <Route
@@ -85,6 +87,8 @@ export default function AppRoutes() {
       <Route path="*" element={<Navigate to="/" />} />
  
     </Routes>
+     <SupportBot />
+     </>
   );
 }
  

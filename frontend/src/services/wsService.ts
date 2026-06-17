@@ -1,5 +1,6 @@
 import { triggerCouponToast } from '../components/coupons/CouponToastContainer';
 import { tokenManager } from '../lib/tokenManager';
+import { adminTokenManager } from '../lib/adminTokenManager';
 import { authService } from './authService';
 import { useNotificationStore } from '../store/notificationStore';
 
@@ -7,7 +8,11 @@ const getWebSocketUrl = () => {
   const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
   const rawToken = tokenManager.getAccess();
   const token = rawToken && !tokenManager.isExpired(rawToken) ? rawToken : null;
+  // Prefer admin token if present and valid (so admin dashboards connect as admin)
+  const adminRaw = adminTokenManager.getAccess();
+  const adminToken = adminRaw && !adminTokenManager.isExpired(adminRaw) ? adminRaw : null;
   const base = `${scheme}://localhost:8000/ws/notifications`;
+  if (adminToken) return `${base}?token=${encodeURIComponent(adminToken)}`;
   return token ? `${base}?token=${encodeURIComponent(token)}` : base;
 };
 
@@ -108,6 +113,17 @@ const handleMessage = (event: MessageEvent) => {
         body: newNotification.body as string,
         code: '',
       });
+      return;
+    }
+
+    // Support chat messages from admin
+    if (payload.type === 'support_chat') {
+      try {
+        console.debug('[wsService] support_chat received', payload);
+        window.dispatchEvent(new CustomEvent('support:message', { detail: payload }));
+      } catch (e) {
+        console.error('[wsService] failed to dispatch support:message', e);
+      }
       return;
     }
   } catch {

@@ -2,10 +2,39 @@ import { useState, useEffect } from 'react';
 import { CheckCircle, Trash2 } from 'lucide-react';
 import { useAdminCallbackStore } from '../store/adminCallbackStore';
 import AdminTopbar from '../components/AdminTopbar';
+import { useAdminAuthStore } from '../store/adminAuthStore';
+import { useState as useStateLocal } from 'react';
+import axios from 'axios';
  
 export default function CustomerServicePage() {
   const { callbacks, fetchPendingCallbacks, updateCallbackStatus, loading } = useAdminCallbackStore();
   const [resolving, setResolving] = useState<number | null>(null);
+  const admin = useAdminAuthStore((s) => s.admin);
+
+  // live chat state
+  const [chats, setChats] = useStateLocal<Array<{ userId: string; from: string; text: string; time?: string }>>([]);
+  const [replyText, setReplyText] = useStateLocal('');
+  const [selectedUser, setSelectedUser] = useStateLocal<string | null>(null);
+
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      const p = e.detail as any;
+      setChats((s) => [{ userId: p.from_user_id, from: p.from_name || `User ${p.from_user_id}`, text: p.text, time: p.time }, ...s]);
+    };
+    window.addEventListener('support:message', handler as EventListener);
+    return () => window.removeEventListener('support:message', handler as EventListener);
+  }, []);
+
+  const sendReply = async () => {
+    if (!selectedUser || !replyText.trim()) return;
+    try {
+      await axios.post('http://localhost:8000/api/v1/support/admin/send', { user_id: selectedUser, text: replyText }, { withCredentials: true });
+      setChats(s => [{ userId: selectedUser as string, from: admin?.name || 'Admin', text: replyText, time: new Date().toISOString() }, ...s]);
+      setReplyText('');
+    } catch (err) {
+      console.error(err);
+    }
+  };
  
   useEffect(() => {
     fetchPendingCallbacks();
@@ -111,6 +140,40 @@ export default function CustomerServicePage() {
           </div>
         )}
  
+        {/* Live chat area */}
+        <div className="mt-8 rounded-2xl border border-white/10 bg-[#0b1224]/50 p-6">
+          <h3 className="text-lg font-semibold text-white mb-3">Live Support Chat</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="col-span-1">
+              <div className="space-y-2">
+                {chats.map((c, i) => (
+                  <button key={i} onClick={() => setSelectedUser(c.userId)} className="w-full text-left p-3 rounded-xl bg-white/3">{c.from} — {c.text}</button>
+                ))}
+              </div>
+            </div>
+            <div className="col-span-2">
+              {selectedUser ? (
+                <div>
+                  <div className="h-48 overflow-y-auto p-3 space-y-2 bg-white/2 rounded">
+                    {chats.filter(ch => ch.userId === selectedUser).map((m, idx) => (
+                      <div key={idx} className="mb-2">
+                        <div className="text-xs text-gray-400">{m.from} • {new Date(m.time || '').toLocaleString()}</div>
+                        <div className="text-sm text-white">{m.text}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <input value={replyText} onChange={e => setReplyText(e.target.value)} className="flex-1 px-3 py-2 rounded-xl bg-white/5" />
+                    <button onClick={sendReply} className="px-4 py-2 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white">Send</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-gray-400">Select a conversation to view and reply.</div>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Stats Footer */}
         {callbacks.length > 0 && (
           <div className="mt-8 rounded-2xl border border-white/10 bg-[#0b1224]/50 p-6">

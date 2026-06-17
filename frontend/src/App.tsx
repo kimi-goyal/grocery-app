@@ -22,6 +22,7 @@ import AdminRoutes from './admin/routes/AdminRoutes';
 import { useAuthStore } from './store/authStore';
 import { wsService } from './services/wsService';
 import CouponToastContainer from './components/coupons/CouponToastContainer';
+import SupportBot from './components/chat/SupportBot';
 
 export default function App() {
   const initAuth = useAuthStore((state) => state.initAuth);
@@ -51,6 +52,7 @@ export default function App() {
         <Route path="/*" element={<AppRoutes />} />
       </Routes>
       <CouponToastContainer />
+     
     </BrowserRouter>
   );
 }
