@@ -23,6 +23,7 @@ class Order(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     order_number = Column(String(20), unique=True, nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    driver_id = Column(String, ForeignKey("drivers.id", ondelete="SET NULL"), nullable=True)
     customer_name = Column(String(100), nullable=False)
     email = Column(String(255), nullable=False)
     phone = Column(String(20), nullable=True)
@@ -51,6 +52,7 @@ class Order(Base):
  
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
     user = relationship("User")
+    driver = relationship("Driver", back_populates="orders")
  
  
 class OrderItem(Base):

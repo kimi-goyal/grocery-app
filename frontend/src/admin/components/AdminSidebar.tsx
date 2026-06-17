@@ -1,7 +1,7 @@
  
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAdminAuthStore } from '../store/adminAuthStore';
-import { LayoutDashboard, Package, ShoppingCart, Users, Warehouse, Tag, ChevronLeft, ChevronRight, LogOut, Headphones } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Users, Warehouse, Tag, ChevronLeft, ChevronRight, LogOut, Headphones, Truck } from 'lucide-react';
 import { useState } from 'react';
  
 const NAV = [
@@ -10,6 +10,7 @@ const NAV = [
   { icon: ShoppingCart, label: 'Orders', to: '/management/orders' },
   { icon: Users, label: 'Customers', to: '/management/customers' },
   { icon: Warehouse, label: 'Inventory', to: '/management/inventory' },
+  { icon: Truck, label: 'Drivers', to: '/management/drivers' },
   { icon: Tag, label: 'Coupons', to: '/management/coupons' },
   { icon: Headphones, label: 'Customer Service', to: '/management/customer-service' },
 ];

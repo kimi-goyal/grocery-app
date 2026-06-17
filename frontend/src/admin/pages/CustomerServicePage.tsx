@@ -14,7 +14,7 @@ export default function CustomerServicePage() {
       fetchPendingCallbacks();
     }, 30000);
     return () => clearInterval(interval);
-  }, [fetchPendingCallbacks]);
+  }, []);
  
   const handleResolve = async (id: number) => {
     setResolving(id);
