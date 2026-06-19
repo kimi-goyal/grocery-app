@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
-from app.dependencies.auth_dependencies import get_current_user, get_db
+from app.dependencies.auth_dependencies import get_current_user
+from app.config.database import get_db
 from app.models.user_model import User
 from app.schemas.user_schema import UserResponse
 from pydantic import BaseModel

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from app.dependencies.auth_dependencies import get_db
+from app.config.database import get_db
 from app.core.dependencies import require_admin
 from app.models.user_model import User
 from app.schemas.dashboard import DashboardStats, TopProduct, InventoryAlert, SalesDataPoint

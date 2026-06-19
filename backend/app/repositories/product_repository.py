@@ -1,29 +1,3 @@
-# from sqlalchemy.orm import Session
-# from sqlalchemy import select
-# from app.models.product_model import Product
-
-# def get_product(db: Session, product_id: int):
-#     return db.get(Product, product_id)
-
-# def list_products(db: Session, category: int | None, sort: str | None):
-#     stmt = select(Product).where(Product.is_active == True)
-
-#     if category:
-#         stmt = stmt.where(Product.category_id == category)
-
-#     if sort == "price_asc":
-#         stmt = stmt.order_by(Product.price.asc())
-#     elif sort == "price_desc":
-#         stmt = stmt.order_by(Product.price.desc())
-
-#     return db.scalars(stmt).all()
-
-# def create_product(db: Session, product: Product):
-#     db.add(product)
-#     db.commit()
-#     db.refresh(product)
-#     return product
-
 
 from sqlalchemy.orm import Session
 from sqlalchemy import select

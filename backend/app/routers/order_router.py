@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from typing import Optional
 import razorpay
 from sqlalchemy import delete
-from app.dependencies.auth_dependencies import get_db
+from app.config.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user_model import User
 from app.models.order import Order, OrderItem, OrderStatus

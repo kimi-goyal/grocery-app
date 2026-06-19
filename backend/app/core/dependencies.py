@@ -1,6 +1,6 @@
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.dependencies.auth_dependencies import get_db
+from app.config.database import get_db
 from app.dependencies.auth_dependencies import get_current_user as get_current_user_payload
 from app.config.security import get_current_role
 from app.models.user_model import User

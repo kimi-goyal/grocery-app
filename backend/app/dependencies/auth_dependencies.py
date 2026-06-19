@@ -1,13 +1,3 @@
-from app.config.database import SessionLocal
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
 from fastapi import HTTPException, Request, status
 from app.config.security import decode_access_token
 

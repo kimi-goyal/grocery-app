@@ -7,8 +7,8 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import logging
- 
-from app.dependencies.auth_dependencies import get_db, get_current_user
+from app.config.database import get_db
+from app.dependencies.auth_dependencies import get_current_user
 from app.models.callback_request import CallbackRequest
 from app.schemas.user_schema import UserResponse
 from app.config.settings import settings

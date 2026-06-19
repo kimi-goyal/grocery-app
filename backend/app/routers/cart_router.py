@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from app.dependencies.auth_dependencies import get_db, get_current_user  # ✅ FIXED
+from app.dependencies.auth_dependencies import  get_current_user  
+from app.config.database import get_db
 from app.services import cart_service
 from app.schemas.cart_schema import CartItemCreate
 

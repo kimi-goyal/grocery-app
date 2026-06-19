@@ -137,17 +137,20 @@ from app.routers import (
     admin_customer_router,
     admin_dashboard_router,
     admin_driver_router,
-    address_router, payment_router, order_router,support_router
+    address_router,
+    payment_router, 
+    order_router,
+    support_router, 
+    payment_router 
 )
 
 from app.routers.coupon_router import admin_router as coupon_admin_router
 from app.routers.coupon_router import user_router as coupon_user_router
 from app.routers.coupon_router import push_router
-from app.routers import payment_router 
 from app.routers.ws_router import router as ws_router
 from app.services.coupon_service import cleanup_expired_coupons, ensure_default_new_user_coupon
 from app.routers.user_order_router import router as user_order_router
-import app.core.firebase_admin  # noqa: F401
+import app.core.firebase_admin 
 
 app = FastAPI(
     title="QuickBite Backend",
@@ -158,7 +161,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
-    allow_credentials=True,  # ✅ REQUIRED FOR COOKIES
+    allow_credentials=True, 
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -168,12 +171,7 @@ os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
 app.include_router(auth_router, prefix="/api/v1")
-#app.include_router(product_router, prefix="/api/v1")
-# app.include_router(admin_router, prefix="/api/v1")
-# app.include_router(category_router, prefix="/api/v1")
 app.include_router(cart_router, prefix="/api/v1")
-# app.include_router(order_router, prefix="/api/v1")
-# app.include_router(user_router, prefix="/api/v1")
 app.include_router(callback_router, prefix="/api/v1")
 app.include_router(admin_dashboard_router.router)
 app.include_router(admin_product_router.router)

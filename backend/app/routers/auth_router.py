@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends, Request, Response, HTTPException, status
 from sqlalchemy.orm import Session
 import logging
 from pydantic import BaseModel, EmailStr
-
-from app.dependencies.auth_dependencies import get_db, get_current_user
+from app.config.database import get_db
+from app.dependencies.auth_dependencies import get_current_user
 from app.repositories.user_repository import get_user_by_email, get_user_by_id
 from app.services.auth_service import google_login_service, register_user, login_user, admin_login_user, verify_otp, resend_otp_service
 from app.schemas.auth_schema import (

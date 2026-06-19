@@ -1,11 +1,10 @@
 
- 
 from fastapi import APIRouter, Depends, Query, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
 from app.models.product import Product 
 from typing import Optional
 
-from app.dependencies.auth_dependencies import get_db
+from app.config.database import get_db
 from app.schemas.product import (
     CategoryCreate, CategoryUpdate, CategoryOut,
     SubcategoryCreate, SubcategoryUpdate, SubcategoryOut,

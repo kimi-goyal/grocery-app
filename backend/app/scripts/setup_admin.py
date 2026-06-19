@@ -22,7 +22,7 @@ sys.path.insert(0, str(project_root))
 # are found when app settings load.
 os.chdir(str(project_root))
  
-from app.dependencies.auth_dependencies import get_db
+from app.config.database import get_db
 from app.models.user_model import User
 from app.utils.password_handler import hash_password
  
