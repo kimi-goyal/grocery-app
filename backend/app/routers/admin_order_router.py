@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import Optional
-from app.dependencies.auth_dependencies import get_db
+from app.config.database import get_db
 from app.core.dependencies import require_admin
 from app.models.user_model import User
 from app.schemas.order import OrderOut, OrderStatusUpdate, PaginatedOrders
