@@ -1,11 +1,13 @@
 
 import uuid
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 import asyncio
+import os
+import shutil
 
 from app.dependencies.auth_dependencies import get_db
 from app.core.dependencies import get_current_user
@@ -54,6 +56,7 @@ class ChatMessage(BaseModel):
     text: str
     ticket_id: Optional[str] = None
     type: Optional[str] = None  # e.g. 'connect' | 'message'
+    image_url: Optional[str] = None  # URL of uploaded image
 
 
 @router.post("/message")
@@ -65,8 +68,34 @@ async def send_support_message(
     """
     Send a lightweight support chat message to all connected admin dashboards.
     This will be forwarded to admins over websockets (best-effort, async).
+    Rejects messages if the conversation is already resolved.
     """
     message_id = uuid.uuid4().hex
+
+    # Determine ticket: prefer provided ticket_id; otherwise reuse an existing open ticket for this user; if none, create a new ticket.
+    ticket_id = data.ticket_id
+    if not ticket_id:
+        # First try to reuse an existing open ticket for this user
+        existing = db.query(SupportTicket).filter(SupportTicket.user_id == user.id, SupportTicket.status == 'open').first()
+        if existing:
+            ticket_id = existing.ticket_id
+        else:
+            # For explicit user messages or connect attempts with no existing open ticket, create a new ticket
+            if data.type == 'message' or data.text or data.type == 'connect':
+                ticket_id = f"TKT-{uuid.uuid4().hex[:8].upper()}"
+    
+    if ticket_id:
+        t = ticket_id
+        ticket = db.query(SupportTicket).filter(SupportTicket.ticket_id == t).first()
+        if not ticket:
+            ticket = SupportTicket(ticket_id=t, user_id=user.id, from_name=getattr(user, "name", None) or getattr(user, "email", "user"))
+            db.add(ticket)
+            db.commit()
+            db.refresh(ticket)
+        
+        # Check if ticket is resolved - reject message if it is
+        if ticket.status == 'resolved':
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Cannot send messages to a resolved conversation')
 
     payload = {
         "type": "support_chat",
@@ -75,32 +104,12 @@ async def send_support_message(
         "from_name": getattr(user, "name", None) or getattr(user, "email", "user"),
         "text": data.text,
         "ticket_id": data.ticket_id,
+        "image_url": data.image_url,
         "time": datetime.utcnow().isoformat(),
     }
 
-    # Determine ticket: prefer provided ticket_id; otherwise reuse an existing open ticket for this user; if none, create a new ticket.
-    ticket_id = data.ticket_id
-    if not ticket_id:
-        # If this is an explicit 'connect' from the user, start a new ticket (fresh conversation)
-        if data.type == 'connect':
-            ticket_id = f"TKT-{uuid.uuid4().hex[:8].upper()}"
-        else:
-            # try to reuse an open ticket for this user
-            existing = db.query(SupportTicket).filter(SupportTicket.user_id == user.id, SupportTicket.status == 'open').first()
-            if existing:
-                ticket_id = existing.ticket_id
-            elif data.type == 'message' or data.text:
-                ticket_id = f"TKT-{uuid.uuid4().hex[:8].upper()}"
     if ticket_id:
         payload['ticket_id'] = ticket_id
-
-        t = ticket_id
-        ticket = db.query(SupportTicket).filter(SupportTicket.ticket_id == t).first()
-        if not ticket:
-            ticket = SupportTicket(ticket_id=t, user_id=user.id, from_name=payload.get('from_name'))
-            db.add(ticket)
-            db.commit()
-            db.refresh(ticket)
 
         msg = SupportMessage(
             message_id=message_id,
@@ -109,6 +118,7 @@ async def send_support_message(
             from_user_id=user.id,
             from_name=payload.get('from_name'),
             text=data.text,
+            image_url=data.image_url,
         )
         db.add(msg)
         db.commit()
@@ -126,7 +136,13 @@ async def send_support_message(
     admin_ct = manager.admin_count()
     print(f"[support] message from user {user.id} forwarded to admins. admin_count={admin_ct}")
 
-    return {"sent": True, "admin_online": admin_ct > 0, "admin_count": admin_ct, "ticket_id": payload.get('ticket_id')}
+    # Include ticket status in response if available so clients can sync state
+    resp_status = None
+    if payload.get('ticket_id'):
+        trow = db.query(SupportTicket).filter(SupportTicket.ticket_id == payload.get('ticket_id')).first()
+        resp_status = trow.status if trow else None
+
+    return {"sent": True, "admin_online": admin_ct > 0, "admin_count": admin_ct, "ticket_id": payload.get('ticket_id'), "status": resp_status}
 
 
 
@@ -140,6 +156,7 @@ class AdminSendPayload(BaseModel):
     user_id: str
     ticket_id: Optional[str] = None
     text: str
+    image_url: Optional[str] = None
 
 
 @router.post('/admin/send')
@@ -160,6 +177,7 @@ async def admin_send_to_user(
         'from_admin_name': getattr(current_user, 'name', None) or getattr(current_user, 'email', 'admin'),
         'text': data.text,
         'ticket_id': data.ticket_id,
+        'image_url': data.image_url,
         'time': datetime.utcnow().isoformat(),
     }
 
@@ -177,6 +195,10 @@ async def admin_send_to_user(
             db.add(ticket)
             db.commit()
             db.refresh(ticket)
+        
+        # Check if ticket is resolved - reject message if it is
+        if ticket.status == 'resolved':
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Cannot send messages to a resolved conversation')
 
         msg = SupportMessage(
             message_id=message_id,
@@ -185,6 +207,7 @@ async def admin_send_to_user(
             from_user_id=current_user.id,
             from_name=payload.get('from_admin_name'),
             text=data.text,
+            image_url=data.image_url,
         )
         db.add(msg)
         db.commit()
@@ -248,6 +271,7 @@ def get_conversation(ticket_id: str, db: Session = Depends(get_db)):
             'from_user_id': m.from_user_id,
             'from_name': m.from_name,
             'text': m.text,
+            'image_url': getattr(m, 'image_url', None),
             'time': m.created_at.isoformat() if m.created_at else None,
         })
     return {'ticket_id': ticket.ticket_id, 'user_id': ticket.user_id, 'messages': out, 'status': ticket.status}
@@ -262,6 +286,44 @@ def resolve_conversation(ticket_id: str, db: Session = Depends(get_db), current_
     db.add(ticket)
     db.commit()
     return {'ticket_id': ticket.ticket_id, 'status': 'resolved'}
+
+
+@router.post('/upload')
+async def upload_image(
+    request: Request,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Upload an image for support chat. 
+    Returns the full URL for use in chat messages.
+    """
+    if not file:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='No file provided')
+    
+    # Validate file is an image
+    allowed_extensions = {'jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'}
+    file_ext = file.filename.split('.')[-1].lower() if '.' in file.filename else ''
+    if file_ext not in allowed_extensions:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Only image files are allowed')
+    
+    # Create uploads directory if it doesn't exist
+    upload_dir = 'uploads'
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    # Generate unique filename
+    file_id = uuid.uuid4().hex
+    file_path = os.path.join(upload_dir, f"{file_id}.{file_ext}")
+    
+    # Save file
+    with open(file_path, 'wb') as f:
+        content = await file.read()
+        f.write(content)
+    
+    # Return full backend URL
+    base_url = str(request.base_url).rstrip('/')
+    image_url = f"{base_url}/uploads/{file_id}.{file_ext}"
+    return {'image_url': image_url, 'file_id': file_id}
 
 
 # NOTE: conversations are persisted to DB; in-memory store removed.

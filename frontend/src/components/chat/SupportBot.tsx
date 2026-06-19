@@ -25,6 +25,7 @@ interface BotMessage {
     type: 'bot' | 'user' | 'system';
     text: string;
     time: string;
+    imageUrl?: string;
 }
 
 interface OrderSummary {
@@ -199,6 +200,10 @@ export default function SupportBot() {
     const [chatTicketId, setChatTicketId] = useState<string | null>(null);
     const [showHistory, setShowHistory] = useState(false);
     const [historyTickets, setHistoryTickets] = useState<any[]>([]);
+    const [chatTicketStatus, setChatTicketStatus] = useState<'open' | 'resolved'>('open');
+    const [selectedImage, setSelectedImage] = useState<File | null>(null);
+    const [uploading, setUploading] = useState(false);
+    const imageInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const handler = (e: CustomEvent) => {
@@ -208,6 +213,7 @@ export default function SupportBot() {
                 type: 'bot',
                 text: payload.text || 'Message from support',
                 time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+                imageUrl: payload.image_url || undefined,
             }]);
             if (!open) setUnread(u => u + 1);
         };
@@ -231,6 +237,7 @@ export default function SupportBot() {
             if (res.data?.ticket_id) {
                 setChatTicketId(res.data.ticket_id);
             }
+            setChatTicketStatus('open');
             setChatConnected(true);
             setChatMessages(prev => [...prev, {
                 id: `sys-${Date.now()}`,
@@ -266,9 +273,16 @@ export default function SupportBot() {
         try {
             const res = await privateApi.get(`/support/conversations/${ticketId}`);
             const msgs = res.data?.messages || [];
-            const mapped: BotMessage[] = msgs.map((m: any, i: number) => ({ id: m.message_id || `h-${i}`, type: m.from_role === 'admin' ? 'bot' : 'user', text: m.text, time: m.time || now() }));
+            const mapped: BotMessage[] = msgs.map((m: any, i: number) => ({ 
+                id: m.message_id || `h-${i}`, 
+                type: m.from_role === 'admin' ? 'bot' : 'user', 
+                text: m.text, 
+                time: m.time || now(),
+                imageUrl: m.image_url || undefined,
+            }));
             setChatMessages(mapped);
             setChatTicketId(ticketId);
+            setChatTicketStatus(res.data?.status || 'open');
             setShowHistory(false);
             setChatConnected(true);
         } catch (e) {
@@ -278,16 +292,63 @@ export default function SupportBot() {
 
     const sendChatMessage = async () => {
         const text = chatInput.trim();
-        if (!text) return;
-        setChatMessages(s => [...s, { id: `u-${Date.now()}`, type: 'user', text, time: now() }]);
-        setChatInput('');
-        try {
-            await privateApi.post('/support/message', { text, type: 'message', ticket_id: chatTicketId });
-        } catch {
+        if (!text && !selectedImage) return;
+        
+        if (chatTicketStatus === 'resolved') {
             setChatMessages(s => [...s, {
                 id: `err-${Date.now()}`, type: 'bot',
-                text: 'Message failed to send. Try again.', time: now(),
+                text: 'This conversation is resolved. You cannot send messages.', time: now(),
             }]);
+            return;
+        }
+
+        // Add optimistic user message
+        if (text) {
+            setChatMessages(s => [...s, { id: `u-${Date.now()}`, type: 'user', text, time: now() }]);
+        }
+        setChatInput('');
+        
+        try {
+            let imageUrl:any = undefined;
+            
+            // Upload image if selected
+            if (selectedImage) {
+                setUploading(true);
+                const formData = new FormData();
+                formData.append('file', selectedImage);
+                const uploadRes = await privateApi.post('/support/upload', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                imageUrl = uploadRes.data?.image_url;
+                setSelectedImage(null);
+                setUploading(false);
+                
+                // Add image message if no text
+                if (!text) {
+                    setChatMessages(s => [...s, { id: `u-${Date.now()}`, type: 'user', text: '[Image sent]', time: now(), imageUrl }]);
+                }
+            }
+            
+            await privateApi.post('/support/message', { 
+                text: text || '[Image sent]', 
+                type: 'message', 
+                ticket_id: chatTicketId,
+                image_url: imageUrl,
+            });
+        } catch (err: any) {
+            console.error('[chat send]', err);
+            if (err.response?.status === 400 && err.response?.data?.detail?.includes('resolved')) {
+                setChatMessages(s => [...s, {
+                    id: `err-${Date.now()}`, type: 'bot',
+                    text: 'This conversation is resolved. You cannot send messages.', time: now(),
+                }]);
+                setChatTicketStatus('resolved');
+            } else {
+                setChatMessages(s => [...s, {
+                    id: `err-${Date.now()}`, type: 'bot',
+                    text: 'Message failed to send. Try again.', time: now(),
+                }]);
+            }
         }
     };
 
@@ -743,6 +804,9 @@ export default function SupportBot() {
         m.type === 'user' ? (
           <div key={m.id} className="flex justify-end gap-2 items-end">
             <div className="flex flex-col items-end gap-1 max-w-[78%]">
+              {m.imageUrl && (
+                <img src={m.imageUrl} alt="shared" className="rounded-2xl rounded-br-sm max-w-full h-auto max-h-64 object-cover" />
+              )}
               <div className="px-3.5 py-2.5 rounded-2xl rounded-br-sm text-sm text-white leading-relaxed"
                 style={{ background: 'linear-gradient(135deg,#ff4d6d,#e63c5a)' }}>
                 {m.text}
@@ -759,6 +823,9 @@ export default function SupportBot() {
               🛒
             </div>
             <div className="flex flex-col gap-1 max-w-[78%]">
+              {m.imageUrl && (
+                <img src={m.imageUrl} alt="shared" className="rounded-2xl rounded-bl-sm max-w-full h-auto max-h-64 object-cover" />
+              )}
               <div className="px-3.5 py-2.5 rounded-2xl rounded-bl-sm text-sm text-gray-200 leading-relaxed"
                 style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
                 {m.text}
@@ -796,30 +863,63 @@ export default function SupportBot() {
         )}
 
     {/* Input */}
-    <div className="mt-3 flex items-center gap-2 pt-3"
-      style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-      <input
-        value={chatInput}
-        onChange={e => setChatInput(e.target.value)}
-        onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendChatMessage()}
-        placeholder="Type a message..."
-        disabled={chatLoading}
-        className="flex-1 px-3.5 py-2.5 rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none disabled:opacity-40"
-        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
-        onFocus={e => (e.currentTarget.style.borderColor = 'rgba(255,77,109,0.4)')}
-        onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
-      />
-      <button
-        onClick={sendChatMessage}
-        disabled={chatLoading || !chatInput.trim()}
-        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 active:scale-95 disabled:opacity-40 transition-all"
-        style={{ background: 'linear-gradient(135deg,#ff4d6d,#e63c5a)' }}
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-          <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" />
-        </svg>
-      </button>
-    </div>
+    {chatTicketStatus === 'resolved' ? (
+      <div className="mt-3 px-3.5 py-2.5 rounded-xl text-center text-sm text-gray-400"
+        style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)' }}>
+        ✓ This conversation is resolved
+      </div>
+    ) : (
+      <div className="mt-3 flex flex-col gap-2">
+        {selectedImage && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-gray-300"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            📎 {selectedImage.name}
+            <button onClick={() => setSelectedImage(null)} className="ml-auto text-gray-500 hover:text-gray-300">✕</button>
+          </div>
+        )}
+        <div className="flex items-center gap-2 pt-3"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <input type="file" ref={imageInputRef} hidden accept="image/*" onChange={(e) => setSelectedImage(e.target.files?.[0] || null)} />
+          <button
+            onClick={() => imageInputRef.current?.click()}
+            disabled={uploading}
+            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all disabled:opacity-40"
+            style={{ background: 'rgba(255,255,255,0.08)' }}
+            title="Upload image"
+          >
+            📷
+          </button>
+          <input
+            value={chatInput}
+            onChange={e => setChatInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendChatMessage()}
+            placeholder="Type a message..."
+            disabled={chatLoading || uploading}
+            className="flex-1 px-3.5 py-2.5 rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none disabled:opacity-40"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+            onFocus={e => (e.currentTarget.style.borderColor = 'rgba(255,77,109,0.4)')}
+            onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
+          />
+          <button
+            onClick={sendChatMessage}
+            disabled={chatLoading || uploading || (!chatInput.trim() && !selectedImage)}
+            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 active:scale-95 disabled:opacity-40 transition-all"
+            style={{ background: 'linear-gradient(135deg,#ff4d6d,#e63c5a)' }}
+          >
+            {uploading ? (
+              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="white" strokeWidth="4" />
+                <path className="opacity-75" fill="white" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" />
+              </svg>
+            )}
+          </button>
+        </div>
+      </div>
+    )}
 
     <p className="text-center text-gray-700 text-[10px] pt-2.5">
       Support hours: 9 AM – 10 PM, 7 days a week

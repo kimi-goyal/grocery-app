@@ -12,6 +12,7 @@ interface ChatMsg {
   fromName: string;
   text: string;
   time: string;
+  imageUrl?: string;
 }
 
 interface Conversation {
@@ -20,6 +21,7 @@ interface Conversation {
   messages: ChatMsg[];
   lastTime: string;
   unread: number;
+  status: 'open' | 'resolved';
 }
 
 export default function CustomerServicePage() {
@@ -50,7 +52,8 @@ export default function CustomerServicePage() {
         id: `msg-${Date.now()}-${Math.random()}`,
         from: 'user',
         fromName: p.from_name || `User ${userId}`,
-        text: p.text || '',
+        text: p.text || (p.image_url ? '[Image sent]' : ''),
+        imageUrl: p.image_url || undefined,
         time: p.time || new Date().toISOString(),
       };
       setConversations((prev) => {
@@ -90,9 +93,18 @@ export default function CustomerServicePage() {
           from: m.from_role === 'admin' ? 'admin' : 'user',
           fromName: m.from_name || '',
           text: m.text || '',
+          imageUrl: m.image_url || undefined,
           time: m.time || new Date().toISOString(),
         } as ChatMsg));
-        setConversations((prev) => ({ ...prev, [ticketId]: { ...(prev[ticketId] || {} as Conversation), messages: formatted, lastTime: res.data?.last_time || (formatted[formatted.length-1]?.time || new Date().toISOString()) } }));
+        setConversations((prev) => ({ 
+          ...prev, 
+          [ticketId]: { 
+            ...(prev[ticketId] || {} as Conversation), 
+            messages: formatted, 
+            status: res.data?.status || 'open',
+            lastTime: res.data?.last_time || (formatted[formatted.length-1]?.time || new Date().toISOString()) 
+          } 
+        }));
       } catch (e) {
         console.error('failed to load messages for', ticketId, e);
       }
@@ -103,6 +115,10 @@ export default function CustomerServicePage() {
 
   const sendReply = async () => {
     if (!activeTicketId || !replyText.trim()) return;
+    if (activeConvo?.status === 'resolved') {
+      alert('Cannot send messages to a resolved conversation');
+      return;
+    }
     const text = replyText.trim();
     setSending(true);
     const optimisticMsg: ChatMsg = {
@@ -125,8 +141,18 @@ export default function CustomerServicePage() {
       const convo = conversations[activeTicketId];
       const user_id = convo?.userId || '';
       await axios.post('http://localhost:8000/api/v1/support/admin/send', { user_id, ticket_id: activeTicketId, text }, { withCredentials: true });
-    } catch (err) {
+    } catch (err: any) {
       console.error('[admin send]', err);
+      if (err.response?.status === 400 && err.response?.data?.detail?.includes('resolved')) {
+        alert('This conversation has been resolved. No new messages can be sent.');
+        setConversations((prev) => ({
+          ...prev,
+          [activeTicketId]: {
+            ...prev[activeTicketId],
+            status: 'resolved',
+          },
+        }));
+      }
     } finally {
       setSending(false);
     }
@@ -139,7 +165,8 @@ export default function CustomerServicePage() {
     // Load persisted support conversations from backend so UI survives refresh
     const loadConversations = async (resolved = false) => {
       try {
-        const url = resolved ? 'http://localhost:8000/api/v1/support/conversations?status=resolved' : 'http://localhost:8000/api/v1/support/conversations';
+        const status = resolved ? 'resolved' : 'open';
+        const url = `http://localhost:8000/api/v1/support/conversations?status=${status}`;
         const res = await axios.get(url, { withCredentials: true });
         const list = res.data?.conversations || [];
         const map: Record<string, Conversation> = {};
@@ -150,6 +177,7 @@ export default function CustomerServicePage() {
             messages: [],
             lastTime: c.last_time || new Date().toISOString(),
             unread: 0,
+            status: c.status || 'open',
           };
         });
         setConversations(map);
@@ -276,9 +304,11 @@ export default function CustomerServicePage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={async () => {
-                  setShowResolved(s => !s);
+                  const newShow = !showResolved;
+                  setShowResolved(newShow);
                   try {
-                    const url = showResolved ? 'http://localhost:8000/api/v1/support/conversations' : 'http://localhost:8000/api/v1/support/conversations?status=resolved';
+                    const status = newShow ? 'resolved' : 'open';
+                    const url = `http://localhost:8000/api/v1/support/conversations?status=${status}`;
                     const res = await axios.get(url, { withCredentials: true });
                     const list = res.data?.conversations || [];
                     const map: Record<string, Conversation> = {};
@@ -289,6 +319,7 @@ export default function CustomerServicePage() {
                         messages: [],
                         lastTime: c.last_time || new Date().toISOString(),
                         unread: 0,
+                        status: c.status || 'open',
                       };
                     });
                     setConversations(map);
@@ -412,9 +443,13 @@ export default function CustomerServicePage() {
                             console.error('resolve failed', e);
                           }
                         }}
-                        className="px-3 py-1 rounded bg-green-600 text-white text-xs"
+                        disabled={activeConvo?.status === 'resolved'}
+                        className="px-3 py-1 rounded text-white text-xs font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{
+                          background: activeConvo?.status === 'resolved' ? '#6B7280' : '#16A34A',
+                        }}
                       >
-                        Mark Solved
+                        {activeConvo?.status === 'resolved' ? '✓ Resolved' : 'Mark Solved'}
                       </button>
                     </div>
                   </div>
@@ -429,6 +464,9 @@ export default function CustomerServicePage() {
                             {m.fromName[0]?.toUpperCase()}
                           </div>
                           <div className="flex flex-col gap-1 max-w-[70%]">
+                            {m.imageUrl && (
+                              <img src={m.imageUrl} alt="shared" className="rounded-2xl rounded-bl-sm max-w-full h-auto max-h-64 object-cover" />
+                            )}
                             <div className="px-4 py-2.5 rounded-2xl rounded-bl-sm text-sm text-gray-200 leading-relaxed"
                               style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
                               {m.text}
@@ -441,6 +479,9 @@ export default function CustomerServicePage() {
                       ) : (
                         <div key={m.id} className="flex gap-3 items-end justify-end">
                           <div className="flex flex-col items-end gap-1 max-w-[70%]">
+                            {m.imageUrl && (
+                              <img src={m.imageUrl} alt="shared" className="rounded-2xl rounded-br-sm max-w-full h-auto max-h-64 object-cover" />
+                            )}
                             <div className="px-4 py-2.5 rounded-2xl rounded-br-sm text-sm text-white leading-relaxed"
                               style={{ background: 'linear-gradient(135deg,#ff4d6d,#e63c5a)' }}>
                               {m.text}
@@ -461,38 +502,45 @@ export default function CustomerServicePage() {
 
                   {/* Reply bar */}
                   <div className="px-4 py-4 shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                    <div className="flex items-center gap-2.5">
-                      <input
-                        value={replyText}
-                        onChange={(e) => setReplyText(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendReply()}
-                        placeholder={`Reply to ${activeConvo.displayName}…`}
-                        disabled={sending}
-                        className="flex-1 px-4 py-3 rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none transition-all disabled:opacity-50"
-                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)' }}
-                        onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(255,77,109,0.4)')}
-                        onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)')}
-                      />
-                      <button
-                        onClick={sendReply}
-                        disabled={sending || !replyText.trim()}
-                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all active:scale-95 disabled:opacity-40"
-                        style={{ background: 'linear-gradient(135deg,#ff4d6d,#e63c5a)' }}
-                      >
-                        {sending ? (
-                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="white" strokeWidth="4" />
-                            <path className="opacity-75" fill="white" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                          </svg>
-                        ) : (
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-                            <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" />
-                          </svg>
-                        )}
-                      </button>
-                    </div>
+                    {activeConvo?.status === 'resolved' ? (
+                      <div className="px-4 py-3 rounded-xl text-center text-sm text-gray-400"
+                        style={{ background: 'rgba(107,183,24,0.08)', border: '1px solid rgba(107,183,24,0.2)' }}>
+                        ✓ This conversation is resolved
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2.5">
+                        <input
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendReply()}
+                          placeholder={`Reply to ${activeConvo.displayName}…`}
+                          disabled={sending}
+                          className="flex-1 px-4 py-3 rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none transition-all disabled:opacity-50"
+                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)' }}
+                          onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(255,77,109,0.4)')}
+                          onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)')}
+                        />
+                        <button
+                          onClick={sendReply}
+                          disabled={sending || !replyText.trim()}
+                          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all active:scale-95 disabled:opacity-40"
+                          style={{ background: 'linear-gradient(135deg,#ff4d6d,#e63c5a)' }}
+                        >
+                          {sending ? (
+                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="white" strokeWidth="4" />
+                              <path className="opacity-75" fill="white" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                          ) : (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                              <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    )}
                     <p className="text-[10px] text-gray-700 mt-2 text-right">
-                      Press Enter to send
+                      {activeConvo?.status === 'resolved' ? 'Conversation closed' : 'Press Enter to send'}
                     </p>
                   </div>
                 </>

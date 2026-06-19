@@ -27,6 +27,7 @@ class SupportMessage(Base):
     from_user_id: Mapped[int] = mapped_column(nullable=True)
     from_name: Mapped[str] = mapped_column(String, nullable=True)
     text: Mapped[str] = mapped_column(Text)
+    image_url: Mapped[str] = mapped_column(String, nullable=True)
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     ticket = relationship("SupportTicket", back_populates="messages")
