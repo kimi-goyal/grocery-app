@@ -24,7 +24,7 @@ async def websocket_notifications(websocket: WebSocket, token: str | None = Quer
         return
 
     role = payload.get("role")
-    print(f"[ws_router] websocket connect user_id={user_id} role={role}")
+    # print(f"[ws_router] websocket connect user_id={user_id} role={role}")
     await manager.connect(user_id, websocket, role=role)
     try:
         while True:

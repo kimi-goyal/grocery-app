@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import AdminTopbar from '../components/AdminTopbar';
 import { useDriverStore } from '../store/driverStore';
 import { Search, Plus, Edit2, Trash2, X, Power, Bike } from 'lucide-react';
-import type { DriverCreate, DriverUpdate } from '../../types/driver.types';
+import type { DriverCreate } from '../../types/driver.types';
 
 export default function DriversPage() {
   const { drivers, loading, fetchDrivers, createDriver, updateDriver, deleteDriver, toggleAvailability } = useDriverStore();

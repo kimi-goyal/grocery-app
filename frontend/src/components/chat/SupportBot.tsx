@@ -72,9 +72,9 @@ export default function SupportBot() {
     const [open, setOpen] = useState(false);
     const [screen, setScreen] = useState<Screen>('home');
     const [messages, setMessages] = useState<BotMessage[]>([]);
-    const [orders, setOrders] = useState<OrderSummary[]>([]);
+    const { orders, fetchOrders } = useOrderStore();
+    const [loading, setLoading]= useState(false);
     const [selectedOrder, setSelectedOrder] = useState<OrderSummary | null>(null);
-    const [loading, setLoading] = useState(false);
     const [unread, setUnread] = useState(0);
     const [couponInput, setCouponInput] = useState('');
     const [couponResult, setCouponResult] = useState<{ valid: boolean; message: string } | null>(null);
@@ -86,7 +86,7 @@ export default function SupportBot() {
 
 
     const { isAuthenticated, user } = useAuthStore();
-    const orderStore = useOrderStore.getState();
+    
 
     // Scroll to bottom on new messages
     useEffect(() => {
@@ -102,31 +102,15 @@ export default function SupportBot() {
         }
     }, [open]);
 
-    // ── Fetch user orders ──────────────────────────────────────────────────────
-
-    const fetchOrders = async () => {
-        if (!isAuthenticated) return;
-        setLoading(true);
-        try {
-            // Use centralized order store so auth/refresh flows are consistent
-            await orderStore.fetchOrders();
-            setOrders(orderStore.orders || []);
-        } catch {
-            setOrders([]);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     // ── Navigate between screens ───────────────────────────────────────────────
 
     const go = (s: Screen) => setScreen(s);
 
-    const goOrders = () => {
-        go('my_orders');
-        fetchOrders();
+    const goOrders = async () => {
+    go('my_orders');
+    await fetchOrders();
     };
-
     const selectOrder = (order: OrderSummary) => {
         setSelectedOrder(order);
         go('order_detail');
@@ -654,7 +638,7 @@ export default function SupportBot() {
                                 <BotBubble>What's the issue with your coupon?</BotBubble>
                                 <div className="space-y-2">
                                     <ActionTile icon="✅" label="Check if coupon is valid" sub="Validate a code right now" onClick={() => go('coupon_validate')} />
-                                    <ActionTile icon="📋" label="View my coupons" sub="See all available offers" onClick={() => window.location.href = '/coupons'} />
+                                    <ActionTile icon="📋" label="View my coupons" sub="See all available offers" onClick={() => window.location.href = '/offers'} />
                                     <ActionTile icon="💬" label="Coupon didn't apply at checkout" sub="Talk to our team" onClick={() => go('escalate')} />
                                 </div>
                             </>
