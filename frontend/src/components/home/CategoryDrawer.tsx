@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function CategoryDrawer({ open, onClose }: Props) {
-  const { categories, fetchData } = useShopStore();
+  const { categories, fetchData, selected } = useShopStore();
 
   // ✅ Hierarchical navigation state
   const [viewingCategoryId, setViewingCategoryId] = useState<string | null>(null);
@@ -26,6 +26,28 @@ export default function CategoryDrawer({ open, onClose }: Props) {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // When drawer opens, sync viewing state with global `selected` category.
+  useEffect(() => {
+    if (!open) return;
+    if (selected) {
+      // find category by name
+      const cat = categories.find((c) => c.name === selected);
+      if (cat) {
+        setViewingCategoryId(cat.id);
+        // if category has exactly one subcategory, open it directly
+        if ((cat.subcategories || []).length === 1) {
+          setSelectedSubId(cat.subcategories[0].id);
+        } else {
+          setSelectedSubId(null);
+        }
+        return;
+      }
+    }
+    // default: keep as-is or reset
+    setViewingCategoryId(null);
+    setSelectedSubId(null);
+  }, [open, selected, categories]);
 
   // ✅ Get current category, subcategory, and products
   const currentCategory = viewingCategoryId
