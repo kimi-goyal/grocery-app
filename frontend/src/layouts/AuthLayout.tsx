@@ -39,7 +39,7 @@ export default function AuthLayout() {
           <div className="absolute inset-0 opacity-20
          bg-black" />
 
-          <div className="relative z-10">
+          <div className={tab === 'login' ? "relative z-10" : "relative z-10 flex flex-col justify-center h-full"}>
             <h1 className="text-5xl font-bold leading-tight">
               Fresh groceries delivered in
               <span className="text-[#ff4d6d]"> 10 minutes</span>
@@ -51,7 +51,7 @@ export default function AuthLayout() {
 
           <img
             src={groceryImage}
-            className="relative z-10 w-[90%] mx-auto"
+            className={tab === 'login' ? "relative z-10 w-[90%] mx-auto" : "relative z-10 w-[100%] mb-12 flex flex-col justify-center h-[90%]"}
           />
         </div>
         {/* ── RIGHT AUTH ── */}
@@ -157,14 +157,3 @@ export default function AuthLayout() {
     </div>
   );
 }
-// {tab === 'login' ? (
-//               <LoginForm
-//                 onSwitch={() => switchTab('register')}
-//                 onNeedsOtp={() => { /* authStore already handles state */ }}
-//               />
-//             ) : (
-//               <RegisterForm
-//                 onSwitch={() => switchTab('login')}
-//                 onRegistered={() => { /* authStore sets authStep=pending_otp */ }}
-//               />
-//             )}

@@ -6,7 +6,7 @@ export const driverService = {
   // Get all drivers
   getDrivers: (activeOnly: boolean = false): Promise<Driver[]> =>
     adminApi.get('/admin/drivers', { params: { active_only: activeOnly } }).then(r => r.data),
-
+  
   // Get single driver
   getDriver: (id: string): Promise<Driver> =>
     adminApi.get(`/admin/drivers/${id}`).then(r => r.data),

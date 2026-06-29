@@ -49,7 +49,7 @@ export default function CategoryDrawer({ open, onClose }: Props) {
     setSelectedSubId(null);
   }, [open, selected, categories]);
 
-  // ✅ Get current category, subcategory, and products
+  // Get current category, subcategory, and products
   const currentCategory = viewingCategoryId
     ? categories.find((c) => c.id === viewingCategoryId)
     : null;

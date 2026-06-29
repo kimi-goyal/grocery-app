@@ -17,10 +17,6 @@ export default function HeroBanner() {
 
         {/* gradient bg */}
         <div className="absolute inset-0 bg-gradient-to-r from-[#0b2a1d] via-[#103a2a] to-[#0b2a1d]" />
-
-      
-      
-
         {/* left content */}
         <div className="relative z-10 max-w-lg">
           <h2
