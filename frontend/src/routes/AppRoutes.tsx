@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 import WelcomePage from "../pages/entry/WelcomePage";
 import AuthLayout from "../layouts/AuthLayout";
@@ -15,12 +14,15 @@ import CustomerCarePage from "../pages/CustomerCarePage";
 import SettingsPage from "../pages/SettingsPage";
 import NotificationPage from "../pages/NotificationPage";
 import SupportBot from "../components/chat/SupportBot";
-
+import { useAuthStore } from "../store/authStore";
+ 
 export default function AppRoutes() {
+  const { isAuthenticated, isGuest } = useAuthStore();
+ 
   return (
     <>
       <Routes>
-
+ 
         <Route
           path="/"
           element={
@@ -29,7 +31,7 @@ export default function AppRoutes() {
             </PublicRoute>
           }
         />
-
+ 
         <Route
           path="/auth"
           element={
@@ -38,14 +40,14 @@ export default function AppRoutes() {
             </PublicRoute>
           }
         />
-
+ 
         <Route
           path="/home"
           element={
             <HomePage />
           }
         />
-
+ 
         <Route
           path="/checkout"
           element={
@@ -54,7 +56,7 @@ export default function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
+ 
         <Route
           path="/profile"
           element={
@@ -85,13 +87,12 @@ export default function AppRoutes() {
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><NotificationPage /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" />} />
-
+ 
       </Routes>
-      <ProtectedRoute>
-        <SupportBot />
-      </ProtectedRoute>
-
+      {(isAuthenticated || isGuest) && <SupportBot />}
+ 
     </>
   );
 }
-
+ 
+ 

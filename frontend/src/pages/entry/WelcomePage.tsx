@@ -7,13 +7,12 @@ export default function WelcomePage() {
   const { skipAsGuest } = useAuthStore();
 
   const handleSkip = () => {
-    skipAsGuest();
-    navigate('/home');
-  };
+  skipAsGuest();
+  navigate('/home', { replace: true }); 
+};
 
   return (
     <div className="min-h-screen bg-[#050816] flex items-center justify-center relative overflow-hidden">
-
       {/* Ambient glows */}
       <div className="absolute top-[-15%] left-[-5%] w-[700px] h-[700px] rounded-full bg-[#ff4d6d]/8 blur-[160px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-5%] w-[500px] h-[500px] rounded-full bg-purple-900/12 blur-[130px] pointer-events-none" />
