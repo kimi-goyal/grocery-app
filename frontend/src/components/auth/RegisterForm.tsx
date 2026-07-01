@@ -1,6 +1,4 @@
-
-
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import Input from '../common/Input';
 import PasswordStrengthBar from './PasswordStrengthBar';
 import { useAuthStore } from '../../store/authStore';
@@ -15,7 +13,7 @@ import {
   validateConfirmPassword,
   hasErrors,
 } from '../../utils/validators';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 
 import GoogleButton from './GoogleButton';
 
@@ -53,7 +51,7 @@ export default function RegisterForm({ onSwitch, onRegistered }: Props) {
     clearFieldErrors,
   } = useAuthStore();
 
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   /* ---------------- Validation ---------------- */
 
   const liveErrors = {
