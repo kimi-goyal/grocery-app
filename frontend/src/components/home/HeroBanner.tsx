@@ -36,7 +36,13 @@ export default function HeroBanner() {
 
           <div className="flex gap-3 mt-5">
             <button
-              onClick={() => navigate("/")}
+               onClick={() => {
+                if (firstCategory) {
+                  navigate(`/home?category=${encodeURIComponent(firstCategory)}`);
+                } else {
+                  navigate('/home');
+                }
+              }}
               className="btn-primary glow-pink-sm px-6 py-2.5 text-sm"
               style={{ borderRadius: "20px" , width: "35%"}}
             >
@@ -44,14 +50,9 @@ export default function HeroBanner() {
             </button>
 
             <button
-              onClick={() => {
-                if (firstCategory) {
-                  navigate(`/home?category=${encodeURIComponent(firstCategory)}`);
-                } else {
-                  navigate('/home');
-                }
-              }}
-              className="btn-social px-5 py-2.5 text-sm border border-white/15">
+              className="btn-social px-5 py-2.5 text-sm border border-white/15"
+              onClick={() => navigate('/offers')}
+            >
               Explore Deals
             </button>
           </div>

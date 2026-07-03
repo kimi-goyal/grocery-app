@@ -143,7 +143,7 @@ from app.routers import (
     support_router, 
     payment_router 
 )
-
+from app.routers.product_router import router as product_router
 from app.routers.coupon_router import admin_router as coupon_admin_router
 from app.routers.coupon_router import user_router as coupon_user_router
 from app.routers.coupon_router import push_router
@@ -184,9 +184,12 @@ app.include_router(support_router.router)
 app.include_router(order_router.router)
 app.include_router(coupon_admin_router)
 app.include_router(coupon_user_router)
+app.include_router(user_order_router)
+app.include_router(product_router)
 app.include_router(push_router)
 app.include_router(ws_router)
-app.include_router(user_order_router)
+
+
 
 # VALIDATION ERROR HANDLER — logs detailed validation errors
 @app.exception_handler(RequestValidationError)

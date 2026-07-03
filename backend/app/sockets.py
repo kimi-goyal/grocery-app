@@ -22,10 +22,10 @@ class ConnectionManager:
             except Exception:
                 pass
         # Debug log
-        # try:
-        #     print(f"[sockets] connect: user_id={user_id} role={role} active_users={len(self.active_connections)} admin_count={len(self.admin_connections)}")
-        # except Exception:
-        #     pass
+        try:
+            print(f"[sockets] connect: user_id={user_id} role={role} active_users={len(self.active_connections)} admin_count={len(self.admin_connections)}")
+        except Exception:
+            pass
 
     async def disconnect(self, user_id: str, websocket: WebSocket) -> None:
         key = str(user_id)
@@ -43,10 +43,10 @@ class ConnectionManager:
             except ValueError:
                 pass
 
-        # try:
-        #     print(f"[sockets] disconnect: user_id={user_id} active_users={len(self.active_connections)} admin_count={len(self.admin_connections)}")
-        # except Exception:
-        #     pass
+        try:
+            print(f"[sockets] disconnect: user_id={user_id} active_users={len(self.active_connections)} admin_count={len(self.admin_connections)}")
+        except Exception:
+            pass
 
         # If an admin disconnected, notify all users about admin presence
         if was_admin:
@@ -58,10 +58,10 @@ class ConnectionManager:
     async def send_personal_message(self, user_id: str, message: dict) -> None:
         key = str(user_id)
         connections = list(self.active_connections.get(key, []))
-        # try:
-        #     print(f"[sockets] send_personal_message: user_id={user_id} conns={len(connections)} payload_type={message.get('type')}")
-        # except Exception:
-        #     pass
+        try:
+            print(f"[sockets] send_personal_message: user_id={user_id} conns={len(connections)} payload_type={message.get('type')}")
+        except Exception:
+            pass
 
         for connection in connections:
             try:
@@ -82,10 +82,10 @@ class ConnectionManager:
     async def send_to_admins(self, message: dict) -> None:
         # Send a message to all currently connected admin sockets
         conns = list(self.admin_connections)
-        # try:
-        #     print(f"[sockets] send_to_admins: admin_count={len(conns)} payload_type={message.get('type')}")
-        # except Exception:
-        #     pass
+        try:
+            print(f"[sockets] send_to_admins: admin_count={len(conns)} payload_type={message.get('type')}")
+        except Exception:
+            pass
         for connection in conns:
             try:
                 await connection.send_json(message)

@@ -11,6 +11,8 @@ import CategoryDrawer from '../../components/home/CategoryDrawer';
 import { useAuthStore } from '../../store/authStore';
 import { useShopStore } from '../../store/shopStore';
 import { useCartStore } from '../../store/cartStore';
+import RecommendedSection from '../../components/home/RecommendedSection';
+
 
 export default function HomePage() {
   const [cartOpen, setCartOpen] = useState(false);
@@ -24,7 +26,7 @@ export default function HomePage() {
 
   // ✅ GLOBAL STORE
   const { categories, fetchData, setSelected } = useShopStore();
-  
+
   const fetchCart = useCartStore((s) => s.fetchCart);
 
   const searchTerm = searchParams.get('search')?.trim() || '';
@@ -53,6 +55,21 @@ export default function HomePage() {
 
   // ✅ featured products (top 8)
   const featuredProducts = allProducts.slice(0, 8);
+
+  {/* Hot Deals — replaces "Best Offers" / shows discount >= 25% products */ }
+  <div className="animate-fadeUp delay-300">
+    <RecommendedSection type="hot-deals" />
+  </div>
+
+  {/* New Arrivals — replaces "Flash Deals" */ }
+  <div className="animate-fadeUp delay-400">
+    <RecommendedSection type="new-arrivals" />
+  </div>
+
+  {/* Recommended for You — personalized */ }
+  <div className="animate-fadeUp delay-400">
+    <RecommendedSection type="recommended" title="You Might Like" />
+  </div>
 
   const filteredProducts = searchTerm
     ? allProducts.filter((p) => p.name.toLowerCase().includes(normalizedSearch))
@@ -216,7 +233,10 @@ export default function HomePage() {
 
       <CategoryDrawer
         open={categoryDrawerOpen}
-        onClose={() => setCategoryDrawerOpen(false)}
+        onClose={() => {
+          setCategoryDrawerOpen(false)
+          navigate("/home")
+        }}
       />
     </div>
   );

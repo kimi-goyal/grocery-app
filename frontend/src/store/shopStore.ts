@@ -1,4 +1,6 @@
+
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 const API = "http://localhost:8000/api/v1/admin";
 
@@ -14,95 +16,190 @@ export type Product = {
   stock: number;
   rating: number;
   reviews_count: number;
+  created_at?: string | null;
 };
 
-export type Subcategory = {
-  id: string;
-  name: string;
-  products: Product[];
-};
-
-export type Category = {
-  id: string;
-  name: string;
-  image: string;
-  subcategories: Subcategory[];
-  products: Product[];
-};
+export type Subcategory = { id: string; name: string; products: Product[]; };
+export type Category = { id: string; name: string; image: string; subcategories: Subcategory[]; products: Product[]; };
 
 interface Store {
   categories: Category[];
-  selected: string;
-
+  selected: string; // persisted — remembers last open category
   setSelected: (name: string) => void;
   fetchData: () => Promise<void>;
 }
 
-export const useShopStore = create<Store>((set) => ({
-  categories: [],
-  selected: "",
+export const useShopStore = create<Store>()(
+  persist(
+    (set, get) => ({
+      categories: [],
+      selected: "", // will be loaded from localStorage on mount
 
-  setSelected: (name) => set({ selected: name }),
+      setSelected: (name) => set({ selected: name }),
 
-  fetchData: async () => {
-    try {
-      const res = await fetch(`${API}/categories`);
-      const data = await res.json();
+      fetchData: async () => {
+        try {
+          const res = await fetch(`${API}/categories`);
+          const data = await res.json();
 
-      const formatted = data.map((cat: any) => {
-        // Flatten products from subcategories for main products array
-        const allProducts = (cat.subcategories || []).flatMap((sub: any) =>
-          (sub.products || []).map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            price: p.price,
-            pack_size: p.pack_size || 0,
-            mrp: p.mrp,
-            image: p.image_url,
-            unit: p.unit,
-            discount: p.discount,
-            stock: p.stock,
-            rating: p.rating || 0,
-            reviews_count: p.reviews_count || 0,
-          }))
-        );
+          const formatted: Category[] = data.map((cat: any) => {
+            const subcategories: Subcategory[] = (cat.subcategories || []).map((sub: any) => ({
+              id: sub.id,
+              name: sub.name,
+              products: (sub.products || []).map((p: any) => ({
+                id: p.id,
+                name: p.name,
+                price: p.price,
+                pack_size: p.pack_size || 1, // ← default 1 not 0
+                mrp: p.mrp,
+                image: p.image_url || '',
+                unit: p.unit || '',
+                discount: p.discount || 0,
+                stock: p.stock || 0,
+                rating: p.rating || 0,
+                reviews_count: p.reviews_count || 0,
+                created_at: p.created_at || null,
+              })),
+            }));
 
-        // Structure subcategories with their products
-        const subcategories = (cat.subcategories || []).map((sub: any) => ({
-          id: sub.id,
-          name: sub.name,
-          products: (sub.products || []).map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            price: p.price,
-            pack_size: p.pack_size || 0,
-            mrp: p.mrp,
-            image: p.image_url,
-            unit: p.unit,
-            discount: p.discount,
-            stock: p.stock,
-            rating: p.rating || 0,
-            reviews_count: p.reviews_count || 0,
-          })),
-        }));
+            const allProducts = subcategories.flatMap(s => s.products);
 
-        return {
-          id: cat.id,
-          name: cat.name,
-          image: cat.image_url,
-          subcategories,
-          products: allProducts,
-        };
-      });
+            return {
+              id: cat.id,
+              name: cat.name,
+              image: cat.image_url || '',
+              subcategories,
+              products: allProducts,
+            };
+          });
 
-      set({
-        categories: formatted,
-        selected: formatted[0]?.name || "",
-      });
+          const currentSelected = get().selected;
+          // Only reset selected if it doesn't exist in new data
+          const stillValid = formatted.some(c => c.name === currentSelected);
 
-    } catch (err) {
-      console.error("Fetch categories error:", err);
+          set({
+            categories: formatted,
+            // Keep remembered selection if still valid, else pick first
+            selected: stillValid ? currentSelected : (formatted[0]?.name || ""),
+          });
+        } catch (err) {
+          console.error("fetchData error:", err);
+        }
+      },
+    }),
+    {
+      name: 'freshcart-shop',
+      partialize: (s) => ({ selected: s.selected }), // only persist selected
     }
-  },
-}));
+  )
+);
+
+
+// import { create } from "zustand";
+
+// const API = "http://localhost:8000/api/v1/admin";
+
+// export type Product = {
+//   id: string;
+//   name: string;
+//   pack_size: number;
+//   price: number;
+//   mrp: number;
+//   image: string;
+//   unit: string;
+//   discount: number;
+//   stock: number;
+//   rating: number;
+//   reviews_count: number;
+// };
+
+// export type Subcategory = {
+//   id: string;
+//   name: string;
+//   products: Product[];
+// };
+
+// export type Category = {
+//   id: string;
+//   name: string;
+//   image: string;
+//   subcategories: Subcategory[];
+//   products: Product[];
+// };
+
+// interface Store {
+//   categories: Category[];
+//   selected: string;
+
+//   setSelected: (name: string) => void;
+//   fetchData: () => Promise<void>;
+// }
+
+// export const useShopStore = create<Store>((set) => ({
+//   categories: [],
+//   selected: "",
+
+//   setSelected: (name) => set({ selected: name }),
+
+//   fetchData: async () => {
+//     try {
+//       const res = await fetch(`${API}/categories`);
+//       const data = await res.json();
+
+//       const formatted = data.map((cat: any) => {
+//         // Flatten products from subcategories for main products array
+//         const allProducts = (cat.subcategories || []).flatMap((sub: any) =>
+//           (sub.products || []).map((p: any) => ({
+//             id: p.id,
+//             name: p.name,
+//             price: p.price,
+//             pack_size: p.pack_size || 0,
+//             mrp: p.mrp,
+//             image: p.image_url,
+//             unit: p.unit,
+//             discount: p.discount,
+//             stock: p.stock,
+//             rating: p.rating || 0,
+//             reviews_count: p.reviews_count || 0,
+//           }))
+//         );
+
+//         // Structure subcategories with their products
+//         const subcategories = (cat.subcategories || []).map((sub: any) => ({
+//           id: sub.id,
+//           name: sub.name,
+//           products: (sub.products || []).map((p: any) => ({
+//             id: p.id,
+//             name: p.name,
+//             price: p.price,
+//             pack_size: p.pack_size || 0,
+//             mrp: p.mrp,
+//             image: p.image_url,
+//             unit: p.unit,
+//             discount: p.discount,
+//             stock: p.stock,
+//             rating: p.rating || 0,
+//             reviews_count: p.reviews_count || 0,
+//           })),
+//         }));
+
+//         return {
+//           id: cat.id,
+//           name: cat.name,
+//           image: cat.image_url,
+//           subcategories,
+//           products: allProducts,
+//         };
+//       });
+
+//       set({
+//         categories: formatted,
+//         selected: formatted[0]?.name || "",
+//       });
+
+//     } catch (err) {
+//       console.error("Fetch categories error:", err);
+//     }
+//   },
+// }));
 
