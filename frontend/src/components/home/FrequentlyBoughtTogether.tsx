@@ -1,5 +1,3 @@
-
-
 import { useEffect, useState } from 'react';
 import { productService, type ProductRec } from '../../services/productService';
 import { useCartStore } from '../../store/cartStore';
