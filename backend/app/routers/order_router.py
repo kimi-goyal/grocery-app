@@ -149,8 +149,8 @@ def place_order(
         db.add(OrderItem(
             order_id=order.id,
             product_id=ci.product_id,
-            name=ci.product.name,              # ✅ FIXED
-            price=ci.product.price,            # ✅ FIXED
+            name=ci.product.name,              
+            price=ci.product.price,            
             quantity=ci.qty,
             unit=ci.product.unit if hasattr(ci.product, "unit") else "",
             image_url=ci.product.image_url if hasattr(ci.product, "image_url") else "",

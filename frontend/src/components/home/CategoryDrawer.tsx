@@ -133,7 +133,7 @@ export default function CategoryDrawer({ open, onClose }: Props) {
       <div
         className={`fixed top-0 left-0 h-full z-50 flex transition-transform duration-300 ${open ? "translate-x-0" : "-translate-x-full"
           }`}
-        style={{ width: "900px", maxWidth: "95vw" }}
+        style={{ width: "1100px", maxWidth: "95vw" }}
       >
         {/* Left Panel: Categories or Subcategories */}
         <div className="w-[260px] bg-[#050816] border-r border-white/8 flex flex-col overflow-y-auto scrollbar-hide">

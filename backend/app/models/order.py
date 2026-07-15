@@ -67,7 +67,7 @@ class OrderItem(Base):
     unit = Column(String(30), nullable=True)
     image_url = Column(String(500), nullable=True)
  
-    # Per-item rating (optional granular feedback)
+  
     item_rating = Column(Float, nullable=True)
  
     order = relationship("Order", back_populates="items")

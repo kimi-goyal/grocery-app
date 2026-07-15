@@ -91,7 +91,7 @@ class RatingSubmit(BaseModel):
     quality_rating: Optional[float] = None
     packaging_rating: Optional[float] = None
     review_text: Optional[str] = None
-    item_ratings: Optional[dict] = None  # { order_item_id: rating }
+    item_ratings: Optional[dict] = None  
 
     @field_validator("overall_rating")
     @classmethod
