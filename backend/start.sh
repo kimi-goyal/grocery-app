@@ -1,9 +1,11 @@
-#!/usr/bin/env bash
-# Exit on error
+#/usr/bin/env bash
+#Exit on error
 set -o errexit
 
-# Run database migrations
+if [ -z "$MIGRATION_DATABASE_URL" ]; then
+    export MIGRATION_DATABASE_URL="$DATABASE_URL"
+fi
+
 alembic upgrade head
 
-# Start the FastAPI server
-uvicorn app.main:app --host 0.0.0.0 --port $PORT
+uvicorn app.main:app --host 0.0.0.0 --port 8000
