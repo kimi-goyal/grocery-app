@@ -11,7 +11,9 @@ const getWebSocketUrl = () => {
   // Prefer admin token if present and valid (so admin dashboards connect as admin)
   const adminRaw = adminTokenManager.getAccess();
   const adminToken = adminRaw && !adminTokenManager.isExpired(adminRaw) ? adminRaw : null;
-  const base = `${scheme}://localhost:8000/ws/notifications`;
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const host = apiUrl.replace(/^https?:\/\//, '');
+  const base = `${scheme}://${host}/ws/notifications`;
   if (adminToken) return `${base}?token=${encodeURIComponent(adminToken)}`;
   return token ? `${base}?token=${encodeURIComponent(token)}` : base;
 };

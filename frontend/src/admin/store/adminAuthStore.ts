@@ -19,12 +19,12 @@ interface AdminAuthState {
  
 export const useAdminAuthStore = create<AdminAuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       admin: null, isAdminAuthenticated: false, initialized: false, loading: false, error: null,
       login: async (email, password) => {
         set({ loading: true, error: null });
         try {
-          const response = await fetch('http://localhost:8000/api/v1/auth/admin-login', {
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/admin-login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -58,7 +58,7 @@ export const useAdminAuthStore = create<AdminAuthState>()(
       },
       logout: async () => {
         try {
-          await fetch('http://localhost:8000/api/v1/auth/logout', {
+          await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/logout`, {
             method: 'POST',
             credentials: 'include',
           });

@@ -60,7 +60,7 @@ function ProductForm({
     formData.append("file", file);
 
     try {
-      const res = await fetch("http://localhost:8000/api/v1/admin/upload-image", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/admin/upload-image`, {
         method: "POST",
         body: formData,
       });

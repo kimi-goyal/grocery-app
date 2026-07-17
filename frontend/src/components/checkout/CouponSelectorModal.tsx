@@ -9,7 +9,7 @@ interface Props {
   appliedCoupon?: UserCoupon | null;
 }
 
-export default function CouponSelectorModal({ open, onClose, onSelect, subtotal, appliedCoupon, loading }: Props) {
+export default function CouponSelectorModal({ open, onClose, onSelect, subtotal, appliedCoupon }: Props) {
   const [coupons, setCoupons] = useState<UserCoupon[]>([]);
   const [loadingCoupons, setLoadingCoupons] = useState(false);
 

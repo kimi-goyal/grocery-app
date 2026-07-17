@@ -61,7 +61,7 @@ export default function LoginForm({ onSwitch, onNeedsOtp }: Props) {
 
 
 
-  const isFormClean = !hasErrors(validateLoginForm(fields.identifier, fields.password));
+  //const isFormClean = !hasErrors(validateLoginForm(fields.identifier, fields.password));
 
   return (
     

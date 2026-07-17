@@ -1,5 +1,5 @@
 
-import { publicApi, privateApi } from './api';
+import { publicApi } from './api';
 
 export interface ProductRec {
   id: string;

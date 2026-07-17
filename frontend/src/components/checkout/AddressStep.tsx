@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAddressStore } from '../../store/addressStore';
 import { useCheckoutStore } from '../../store/checkoutStore';
 import AddressForm from './AddressForm';
-import type { Address } from '../../types/checkout.types';
+//import type { Address } from '../../types/checkout.types';
 
 export default function AddressStep() {
   const { addresses, loading, fetchAddresses, deleteAddress } = useAddressStore();

@@ -86,7 +86,7 @@ export default function CustomerServicePage() {
       try {
         const existing = conversations[ticketId];
         if (existing && existing.messages && existing.messages.length > 0) return;
-        const res = await axios.get(`http://localhost:8000/api/v1/support/conversations/${ticketId}`, { withCredentials: true });
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/support/conversations/${ticketId}`, { withCredentials: true });
         const msgs = res.data?.messages || [];
         const formatted = msgs.map((m: any) => ({
           id: m.message_id || `m-${Date.now()}-${Math.random()}`,
@@ -140,7 +140,7 @@ export default function CustomerServicePage() {
     try {
       const convo = conversations[activeTicketId];
       const user_id = convo?.userId || '';
-      await axios.post('http://localhost:8000/api/v1/support/admin/send', { user_id, ticket_id: activeTicketId, text }, { withCredentials: true });
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/support/admin/send`, { user_id, ticket_id: activeTicketId, text }, { withCredentials: true });
     } catch (err: any) {
       console.error('[admin send]', err);
       if (err.response?.status === 400 && err.response?.data?.detail?.includes('resolved')) {
@@ -166,7 +166,7 @@ export default function CustomerServicePage() {
     const loadConversations = async (resolved = false) => {
       try {
         const status = resolved ? 'resolved' : 'open';
-        const url = `http://localhost:8000/api/v1/support/conversations?status=${status}`;
+        const url = `${import.meta.env.VITE_API_URL}/api/v1/support/conversations?status=${status}`;
         const res = await axios.get(url, { withCredentials: true });
         const list = res.data?.conversations || [];
         const map: Record<string, Conversation> = {};
@@ -308,7 +308,7 @@ export default function CustomerServicePage() {
                   setShowResolved(newShow);
                   try {
                     const status = newShow ? 'resolved' : 'open';
-                    const url = `http://localhost:8000/api/v1/support/conversations?status=${status}`;
+                    const url = `${import.meta.env.VITE_API_URL}/api/v1/support/conversations?status=${status}`;
                     const res = await axios.get(url, { withCredentials: true });
                     const list = res.data?.conversations || [];
                     const map: Record<string, Conversation> = {};
@@ -437,7 +437,7 @@ export default function CustomerServicePage() {
                         onClick={async () => {
                           try {
                             if (!activeTicketId) return;
-                            await axios.post(`http://localhost:8000/api/v1/support/conversations/${activeTicketId}/resolve`, {}, { withCredentials: true });
+                            await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/support/conversations/${activeTicketId}/resolve`, {}, { withCredentials: true });
                             setConversations(prev => ({ ...prev, [activeTicketId]: { ...prev[activeTicketId], status: 'resolved' } }));
                           } catch (e) {
                             console.error('resolve failed', e);

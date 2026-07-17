@@ -9,7 +9,7 @@ interface Props {
   productName: string;
 }
 
-export default function FrequentlyBoughtTogether({ productId, productName }: Props) {
+export default function FrequentlyBoughtTogether({ productId }: Props) {
   const [products, setProducts] = useState<ProductRec[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const { items, addItem } = useCartStore();

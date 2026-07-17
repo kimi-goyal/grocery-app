@@ -1,7 +1,7 @@
 
 import { create } from "zustand";
 
-const API = "http://localhost:8000/api/v1/admin";
+const API = `${import.meta.env.VITE_API_URL}/api/v1/admin`;
 
 export type Product = {
   id: string;
@@ -63,7 +63,7 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
     set({ loading: true });
 
     try {
-      const res = await fetch("http://localhost:8000/api/v1/admin/categories");
+      const res = await fetch(`${API}/categories`);
       const data = await res.json();
 
       const formatted = data.map((cat: any) => ({
