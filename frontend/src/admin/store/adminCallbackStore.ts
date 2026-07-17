@@ -22,7 +22,7 @@ interface AdminCallbackStore {
   addCallback: (callback: CallbackNotification) => void;
 }
  
-export const useAdminCallbackStore = create<AdminCallbackStore>((set, get) => ({
+export const useAdminCallbackStore = create<AdminCallbackStore>((set) => ({
   callbacks: [],
   pendingCount: 0,
   loading: false,
@@ -31,7 +31,7 @@ export const useAdminCallbackStore = create<AdminCallbackStore>((set, get) => ({
   fetchPendingCallbacks: async () => {
     set({ loading: true, error: null });
     try {
-      const response = await fetch('http://localhost:8000/api/v1/callback/pending', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/callback/pending`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -64,7 +64,7 @@ export const useAdminCallbackStore = create<AdminCallbackStore>((set, get) => ({
  
   updateCallbackStatus: async (id: number, newStatus: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/callback/${id}/status`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/callback/${id}/status`, {
         method: 'PUT',
         credentials: 'include',
         headers: {

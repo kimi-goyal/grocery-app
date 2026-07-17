@@ -3,7 +3,7 @@ import { useCheckoutStore } from '../../store/checkoutStore';
 import { useNavigate } from 'react-router-dom';
 
 export default function CartReviewStep() {
-  const { items, updateQty, removeItem, totalPrice } = useCartStore();
+  const { items, updateQty, removeItem } = useCartStore();
   const { setStep } = useCheckoutStore();
   const navigate = useNavigate();
 

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-const API = "http://localhost:8000/api/v1/admin";
+const API = `${import.meta.env.VITE_API_URL}/api/v1/admin`;
 
 export type OrderStatus =
   | "Pending"

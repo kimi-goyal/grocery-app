@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAddressStore } from '../store/addressStore';
 import AddressForm from '../components/checkout/AddressForm';
-import type { Address } from '../types/checkout.types';
+//import type { Address } from '../types/checkout.types';
 
 export default function AddressesPage() {
   const navigate = useNavigate();

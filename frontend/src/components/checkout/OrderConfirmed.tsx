@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
  
 export default function OrderConfirmed() {
-  const { orderNumber, selectedAddressId, paymentMethod, couponResult, reset } = useCheckoutStore();
+  const { orderNumber, selectedAddressId, paymentMethod, couponResult } = useCheckoutStore();
   const { addresses } = useAddressStore();
   const navigate = useNavigate();
   const addr = addresses.find(a => a.id === selectedAddressId);

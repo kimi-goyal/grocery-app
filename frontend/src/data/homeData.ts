@@ -1,4 +1,4 @@
-// DUMMY DATA — replace with API calls to http://localhost:8000
+// DUMMY DATA — replace with API calls to VITE_API_URL
 
 export const CATEGORIES = [
   { id: 1, name: 'Fruits & Vegetables', icon: '🥦', color: '#22c55e', count: 120 },

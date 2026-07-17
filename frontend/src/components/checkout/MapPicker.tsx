@@ -104,6 +104,7 @@ export default function MapPicker({ onLocationSelect }: MapPickerProps) {
         }
       }
     );
+    console.log(loaded)
   };
 
   const locateMe = () => {

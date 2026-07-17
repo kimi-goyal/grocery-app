@@ -15,7 +15,7 @@ interface DriverState {
   toggleAvailability: (id: string) => Promise<void>;
 }
 
-export const useDriverStore = create<DriverState>((set, get) => ({
+export const useDriverStore = create<DriverState>((set) => ({
   drivers: [],
   loading: false,
   error: null,
