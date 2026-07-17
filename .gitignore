@@ -34,9 +34,8 @@ node_modules/
 .DS_Store
 Thumbs.db
 
-
 backend/firebase-service-account.json
-backend/alembic
+# backend/alembic
 
  
 # Python
