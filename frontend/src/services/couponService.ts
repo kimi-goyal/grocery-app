@@ -1,5 +1,5 @@
 
-import { privateApi, publicApi } from './api';
+import { privateApi } from './api';
 import type { UserCoupon, CouponValidateResponse } from '../types/coupon.types';
 
 export const couponService = {
