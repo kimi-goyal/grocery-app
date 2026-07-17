@@ -34,3 +34,6 @@ slowapi
 # Testing
 pytest
 pytest-asyncio
+
+passlib[bcrypt]
+razorpay
