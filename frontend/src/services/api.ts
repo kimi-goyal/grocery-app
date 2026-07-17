@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { tokenManager } from '../lib/tokenManager';
  
-const BASE_URL = `${import.meta.env.VITE_API_URL}/api/v1`;
+export const BASE_URL = `${import.meta.env.VITE_API_URL}/api/v1`;
  
 interface AuthTokens {
   access_token: string;
