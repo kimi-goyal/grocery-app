@@ -5,7 +5,7 @@ import AdminTopbar from '../components/AdminTopbar';
 import { useAdminAuthStore } from '../store/adminAuthStore';
 import axios from 'axios';
 // import BASE_URL from your centralized services file
-import { BASE_URL } from '../services/api';
+import { BASE_URL } from '../../services/api';
 
 interface ChatMsg {
   id: string;
