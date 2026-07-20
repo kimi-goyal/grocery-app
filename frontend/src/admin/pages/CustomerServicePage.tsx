@@ -1,10 +1,11 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { CheckCircle } from 'lucide-react';
 import { useAdminCallbackStore } from '../store/adminCallbackStore';
 import AdminTopbar from '../components/AdminTopbar';
 import { useAdminAuthStore } from '../store/adminAuthStore';
 import axios from 'axios';
+// import BASE_URL from your centralized services file
+import { BASE_URL } from '../services/api';
 
 interface ChatMsg {
   id: string;
@@ -30,7 +31,6 @@ export default function CustomerServicePage() {
   const admin = useAdminAuthStore((s) => s.admin);
 
   const [conversations, setConversations] = useState<Record<string, Conversation>>({});
-  // `activeTicketId` holds the ticket_id for the conversation (keys of `conversations`)
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
   const [sending, setSending] = useState(false);
@@ -81,12 +81,14 @@ export default function CustomerServicePage() {
       [ticketId]: { ...prev[ticketId], unread: 0 },
     }));
 
-    // If messages not loaded yet, fetch conversation messages
     const loadMessages = async () => {
       try {
         const existing = conversations[ticketId];
         if (existing && existing.messages && existing.messages.length > 0) return;
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/support/conversations/${ticketId}`, { withCredentials: true });
+       
+        // Updated URL string using BASE_URL template literal
+        const res = await axios.get(`${BASE_URL}/api/v1/support/conversations/${ticketId}`, { withCredentials: true });
+       
         const msgs = res.data?.messages || [];
         const formatted = msgs.map((m: any) => ({
           id: m.message_id || `m-${Date.now()}-${Math.random()}`,
@@ -96,14 +98,14 @@ export default function CustomerServicePage() {
           imageUrl: m.image_url || undefined,
           time: m.time || new Date().toISOString(),
         } as ChatMsg));
-        setConversations((prev) => ({ 
-          ...prev, 
-          [ticketId]: { 
-            ...(prev[ticketId] || {} as Conversation), 
-            messages: formatted, 
+        setConversations((prev) => ({
+          ...prev,
+          [ticketId]: {
+            ...(prev[ticketId] || {} as Conversation),
+            messages: formatted,
             status: res.data?.status || 'open',
-            lastTime: res.data?.last_time || (formatted[formatted.length-1]?.time || new Date().toISOString()) 
-          } 
+            lastTime: res.data?.last_time || (formatted[formatted.length-1]?.time || new Date().toISOString())
+          }
         }));
       } catch (e) {
         console.error('failed to load messages for', ticketId, e);
@@ -140,7 +142,10 @@ export default function CustomerServicePage() {
     try {
       const convo = conversations[activeTicketId];
       const user_id = convo?.userId || '';
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/support/admin/send`, { user_id, ticket_id: activeTicketId, text }, { withCredentials: true });
+     
+      // Updated URL string using BASE_URL template literal
+      await axios.post(`${BASE_URL}/api/v1/support/admin/send`, { user_id, ticket_id: activeTicketId, text }, { withCredentials: true });
+     
     } catch (err: any) {
       console.error('[admin send]', err);
       if (err.response?.status === 400 && err.response?.data?.detail?.includes('resolved')) {
@@ -162,11 +167,13 @@ export default function CustomerServicePage() {
     fetchPendingCallbacks();
     const interval = setInterval(() => fetchPendingCallbacks(), 30_000);
 
-    // Load persisted support conversations from backend so UI survives refresh
     const loadConversations = async (resolved = false) => {
       try {
         const status = resolved ? 'resolved' : 'open';
-        const url = `${import.meta.env.VITE_API_URL}/api/v1/support/conversations?status=${status}`;
+       
+        // Updated URL string using BASE_URL template literal
+        const url = `${BASE_URL}/api/v1/support/conversations?status=${status}`;
+       
         const res = await axios.get(url, { withCredentials: true });
         const list = res.data?.conversations || [];
         const map: Record<string, Conversation> = {};
@@ -308,7 +315,10 @@ export default function CustomerServicePage() {
                   setShowResolved(newShow);
                   try {
                     const status = newShow ? 'resolved' : 'open';
-                    const url = `${import.meta.env.VITE_API_URL}/api/v1/support/conversations?status=${status}`;
+                   
+                    // Updated URL string using BASE_URL template literal
+                    const url = `${BASE_URL}/api/v1/support/conversations?status=${status}`;
+                   
                     const res = await axios.get(url, { withCredentials: true });
                     const list = res.data?.conversations || [];
                     const map: Record<string, Conversation> = {};
@@ -354,9 +364,8 @@ export default function CustomerServicePage() {
                   </div>
                 ) : (
                   sortedConvos.map((convo) => {
-                        // derive ticketId by searching the conversations map for this value
-                        const ticketId = Object.keys(conversations).find(k => conversations[k] === convo) || convo.userId;
-                        const isActive = activeTicketId === ticketId;
+                    const ticketId = Object.keys(conversations).find(k => conversations[k] === convo) || convo.userId;
+                    const isActive = activeTicketId === ticketId;
                     const lastMsg = convo.messages[convo.messages.length - 1];
                     return (
                       <button
@@ -437,7 +446,10 @@ export default function CustomerServicePage() {
                         onClick={async () => {
                           try {
                             if (!activeTicketId) return;
-                            await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/support/conversations/${activeTicketId}/resolve`, {}, { withCredentials: true });
+                           
+                            // Updated URL string using BASE_URL template literal
+                            await axios.post(`${BASE_URL}/api/v1/support/conversations/${activeTicketId}/resolve`, {}, { withCredentials: true });
+                           
                             setConversations(prev => ({ ...prev, [activeTicketId]: { ...prev[activeTicketId], status: 'resolved' } }));
                           } catch (e) {
                             console.error('resolve failed', e);
